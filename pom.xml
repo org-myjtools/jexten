@@ -13,8 +13,18 @@
 
     <artifactId>jexten</artifactId>
     <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <groupId>org.myjtools.jexten</groupId>
     <name>JExten</name>
     <description>Java Extensions</description>
+
+
+    
+    <modules>
+        <module>jexten-processor</module>
+        <module>jexten-core</module>
+        <module>jexten-plugin</module>
+    </modules>
 
 
 </project>
