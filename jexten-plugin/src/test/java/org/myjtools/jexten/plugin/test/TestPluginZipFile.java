@@ -20,9 +20,8 @@ public class TestPluginZipFile {
         Path path = Path.of("src/test/resources/plugin.zip");
         PluginBundleFile file = PluginBundleFile.read(path);
         file.extract(tempDir);
-        assertThat(tempDir.resolve("group1/plugin-a-1.2.jar")).exists();
-        assertThat(tempDir.resolve("group1/lib-b-2.9.jar")).exists();
-        assertThat(tempDir.resolve("group2/lib-c-1.3.jar")).exists();
+        assertThat(tempDir.resolve("assertj/assertj-core-3.27.1.jar")).exists();
+        assertThat(tempDir.resolve("slf4j/slf4j-simple-2.0.16.jar")).exists();
     }
 
 

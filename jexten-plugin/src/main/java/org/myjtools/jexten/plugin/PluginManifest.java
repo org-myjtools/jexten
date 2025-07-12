@@ -22,8 +22,7 @@ public class PluginManifest {
     private String name;
     private String version;
     private String application;
-    private String module;
-    private String parentModule;
+    private String hostModule;
     private String displayName;
     private String description;
     private String url;
@@ -44,8 +43,7 @@ public class PluginManifest {
         this.version = builder.version();
         this.application = builder.application();
         this.displayName = builder.displayName();
-        this.module = builder.module();
-        this.parentModule = builder.parentModule();
+        this.hostModule = builder.hostModule();
         this.description = builder.description();
         this.url = builder.url();
         this.licenseName = builder.licenseName();
@@ -99,12 +97,8 @@ public class PluginManifest {
         return displayName;
     }
 
-    public String module() {
-        return module;
-    }
-
-    public String parentModule() {
-        return parentModule;
+    public String hostModule() {
+        return hostModule;
     }
 
     public String description() {

@@ -21,6 +21,8 @@ import org.myjtools.jexten.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class JextenProcessor extends AbstractProcessor {
 
+    public static final String MODULE = "org.myjtools.jexten";
+
     static {
         System.out.println("Jexten Processor");
     }
@@ -60,7 +62,7 @@ public class JextenProcessor extends AbstractProcessor {
         if (!errors.hasMessages()) {
             writeExtensionsFile(serviceImplementations);
             var extensionPoints = helper.getElementsAnnotatedWith(ExtensionPoint.class).stream()
-                    .map(it -> it.getSimpleName().toString())
+                    .map(Object::toString)
                     .toList();
             writeExtensionPointsFile(extensionPoints);
 
@@ -171,10 +173,11 @@ public class JextenProcessor extends AbstractProcessor {
         if (noOpensMatchExtensionPointPackage(opens, extensionPointPackage)) {
             errors.addMessage(
                 extensionPointPackage,
-                "Extension point package {} must be opened to jexten in the module-info.java file",
-                extensionPointPackage
+                "Extension point package {} must be opened to {} in the module-info.java file",
+                extensionPointPackage,
+                    MODULE
             );
-            errors.addFix("opens {} to jexten;",extensionPointPackage);
+            errors.addFix("opens {} to {};",extensionPointPackage, MODULE);
         }
         if (extensionPointNotDeclaredInUses(uses, extensionPoint)) {
             errors.addMessage(
@@ -208,7 +211,7 @@ public class JextenProcessor extends AbstractProcessor {
             .stream()
             .filter(it -> it.getPackage().equals(extensionPointPackage))
             .flatMap(it -> it.getTargetModules().stream())
-            .noneMatch(it -> it.getQualifiedName().toString().equals("jexten"));
+            .noneMatch(it -> it.getQualifiedName().toString().equals(MODULE));
     }
 
 
@@ -254,8 +257,7 @@ public class JextenProcessor extends AbstractProcessor {
 
         if (!nonDeclared.isEmpty()) {
             for (String extension : nonDeclared) {
-                errors.addMessage(
-                    helper.getTypeElement(extension),
+                errors.addMessage(                    helper.getTypeElement(extension),
                     "Extension {} implementing extension point {} must be declared in the module-info.java file",
                     extension,
                     extensionPoint
@@ -482,7 +484,8 @@ public class JextenProcessor extends AbstractProcessor {
         }
         if (errors.hasFixes()) {
             String fixes = errors.fixes().collect(joining("\n\t","\n\t",""));
-            helper.log(Kind.ERROR, "Try to apply the following fixes to the module-info.java file:",fixes);
+            helper.log(Kind.ERROR, "Try to apply the following fixes to the module-info.java file:");
+            helper.log(Kind.ERROR, fixes);
         }
     }
 

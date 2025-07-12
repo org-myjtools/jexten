@@ -35,24 +35,6 @@ public class FileUtil {
     }
 
 
-    public static Path downloadZipFromUri(URI uri) throws IOException, InterruptedException {
-        log.info("Downloading plugin bundle from URI: {}", uri);
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            Path temporaryFile = Files.createTempFile("plugin-", ".zip");
-            HttpRequest request = HttpRequest.newBuilder(uri).build();
-            HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(temporaryFile));
-            if (response.statusCode() != 200) {
-                throw new PluginException(
-                        "Cannot retrieve plugin bundle file: {} - {}" ,
-                        response.statusCode(),
-                        response.body()
-                );
-            }
-            return temporaryFile;
-        }
-    }
-
-
     public static Path zipSlipProtect(ZipEntry zipEntry, Path targetFolder) throws IOException {
         Path targetDirResolved = targetFolder.resolve(zipEntry.getName());
         Path normalizePath = targetDirResolved.normalize();

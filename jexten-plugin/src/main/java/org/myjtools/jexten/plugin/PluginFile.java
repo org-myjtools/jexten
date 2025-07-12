@@ -15,7 +15,7 @@ import java.util.zip.ZipFile;
 public sealed abstract class PluginFile permits PluginBundleFile, PluginJarFile {
 
 
-    protected static final String PLUGIN_MANIFEST_FILE = "plugin.yaml";
+    public static final String PLUGIN_MANIFEST_FILE = "plugin.yaml";
 
     protected final Path path;
     protected PluginManifest plugin;

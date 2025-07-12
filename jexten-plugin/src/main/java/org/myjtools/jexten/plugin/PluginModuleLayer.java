@@ -56,7 +56,7 @@ public class PluginModuleLayer {
     public boolean isHostedBy(ModuleLayer moduleLayer) {
         return moduleLayer.modules().stream()
             .map(Module::getName)
-            .anyMatch(plugin.parentModule()::equals);
+            .anyMatch(plugin.hostModule()::equals);
     }
 
 

@@ -10,21 +10,13 @@
         <version>1.0.0</version>
     </parent>
 
-
-    <artifactId>jexten</artifactId>
+    <groupId>org.myjtools.jexten.example</groupId>
+    <artifactId>jexten-example</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
-    <groupId>org.myjtools.jexten</groupId>
-    <name>JExten</name>
-    <description>Java Extensions</description>
-
-
-    
     <modules>
-        <module>jexten-processor</module>
-        <module>jexten-core</module>
-        <module>jexten-plugin</module>
-        <module>jexten-maven-plugin</module>
+        <module>jexten-example-app</module>
+        <module>jexten-example-plugin-a</module>
     </modules>
 
 

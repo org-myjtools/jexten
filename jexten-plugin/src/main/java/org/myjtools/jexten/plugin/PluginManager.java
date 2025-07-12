@@ -2,14 +2,12 @@ package org.myjtools.jexten.plugin;
 
 import org.myjtools.jexten.ModuleLayerProvider;
 import org.myjtools.jexten.Version;
-import org.myjtools.jexten.plugin.internal.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -105,23 +103,6 @@ public class PluginManager implements ModuleLayerProvider {
 
 
     /**
-     * Install a plugin bundle from a URI. The bundle file must contain a valid plugin manifest.
-     * @param pluginURI The URI to the plugin bundle file
-     */
-    public void installPluginFromBundle(URI pluginURI) {
-        Path temporaryFile = null;
-        try {
-            temporaryFile = FileUtil.downloadZipFromUri(pluginURI);
-            installPluginFromBundle(temporaryFile);
-        } catch (IOException | InterruptedException e) {
-            throw new PluginException(e, "Cannot install plugin from URI {}", pluginURI);
-        } finally {
-            FileUtil.deleteFile(temporaryFile);
-        }
-    }
-
-
-    /**
      * Install a plugin from a JAR file. The JAR file must contain a valid plugin manifest.
      * If the plugin is already installed, it will be updated if the new version is greater than the existing one.
      * It also retrieves the plugin dependencies and copies them to the artifacts directory.
@@ -139,8 +120,6 @@ public class PluginManager implements ModuleLayerProvider {
             throw new PluginException(e, "Cannot install plugin from file {}", jarFile);
         }
     }
-
-
 
 
     private void installPluginManifest(PluginManifest manifest, Path manifestFile) throws IOException {

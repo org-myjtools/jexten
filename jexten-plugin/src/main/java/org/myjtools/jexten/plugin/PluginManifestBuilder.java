@@ -8,8 +8,7 @@ public class PluginManifestBuilder {
     private String name;
     private String version;
     private String application;
-    private String module;
-    private String parentModule;
+    private String hostModule;
     private String displayName;
     private String description;
     private String url;
@@ -44,13 +43,8 @@ public class PluginManifestBuilder {
         return this;
     }
 
-    public PluginManifestBuilder module(String module) {
-        this.module = module;
-        return this;
-    }
-
-    public PluginManifestBuilder parentModule(String parentModule) {
-        this.parentModule = parentModule;
+    public PluginManifestBuilder hostModule(String hostModule) {
+        this.hostModule = hostModule;
         return this;
     }
 
@@ -117,12 +111,8 @@ public class PluginManifestBuilder {
         return displayName;
     }
 
-    public String module() {
-        return module;
-    }
-
-    public String parentModule() {
-        return parentModule;
+    public String hostModule() {
+        return hostModule;
     }
 
     public String description() {
