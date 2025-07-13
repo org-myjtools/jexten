@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.myjtools</groupId>
-        <artifactId>myjtools-parent</artifactId>
+        <groupId>org.myjtools.jexten</groupId>
+        <artifactId>jexten-plugin-parent</artifactId>
         <version>1.0.0</version>
     </parent>
 
@@ -15,49 +15,18 @@
     <artifactId>jexten-example-plugin-a</artifactId>
     <version>1.0.0</version>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.myjtools.jexten.example</groupId>
-            <artifactId>jexten-example-app</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.myjtools.jexten</groupId>
-            <artifactId>jexten-processor</artifactId>
-            <version>1.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+    <properties>
+        <jexten.application>org.myjtools.jexten.example</jexten.application>
+        <jexten.hostModule>org.myjtools.jexten.example</jexten.hostModule>
+        <jexten.hostArtifact>org.myjtools.jexten.example:jexten-example-app</jexten.hostArtifact>
+    </properties>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.myjtools.jexten</groupId>
-                            <artifactId>jexten-processor</artifactId>
-                            <version>1.0.0</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.myjtools.jexten</groupId>
-                <artifactId>jexten-maven-plugin</artifactId>
-                <version>1.0.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate-manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <licenses>
+        <license>
+            <name>MIT</name>
+        </license>
+    </licenses>
+
+
 
 </project>

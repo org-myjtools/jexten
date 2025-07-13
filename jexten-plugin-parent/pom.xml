@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.myjtools</groupId>
+        <artifactId>myjtools-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <groupId>org.myjtools.jexten</groupId>
+    <artifactId>jexten-plugin-parent</artifactId>
+    <name>Jexten Plugin Parent</name>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <jexten.application></jexten.application>
+        <jexten.hostModule></jexten.hostModule>
+        <jexten.hostArtifact></jexten.hostArtifact>
+        <jexten-processor.version>1.0.0</jexten-processor.version>
+        <jexten-maven-plugin.version>1.0.0</jexten-maven-plugin.version>
+    </properties>
+
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+        </license>
+    </licenses>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.myjtools.jexten</groupId>
+            <artifactId>jexten-processor</artifactId>
+            <version>${jexten-processor.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.myjtools.jexten</groupId>
+                                <artifactId>jexten-processor</artifactId>
+                                <version>${jexten-processor.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.myjtools.jexten</groupId>
+                    <artifactId>jexten-maven-plugin</artifactId>
+                    <version>${jexten-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>generate-manifest</goal>
+                                <goal>assemble-bundle</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <application>${jexten.application}</application>
+                        <hostModule>${jexten.hostModule}</hostModule>
+                        <hostArtifact>${jexten.hostArtifact}</hostArtifact>
+                    </configuration>
+                </plugin>
+            </plugins>
+    </build>
+
+</project>

@@ -10,33 +10,53 @@ import org.apache.maven.project.MavenProject;
 import org.myjtools.jexten.plugin.PluginFile;
 import org.myjtools.jexten.plugin.PluginManifest;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 
 @Mojo(name = "generate-manifest", defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
 public class ManifestMojo extends AbstractMojo {
 
 
+    public static final String LICENSE_FILE = "LICENSE";
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
     @Parameter(defaultValue = "${project.basedir}", readonly = true, required = true)
     private File basedir;
 
-    @Parameter(defaultValue = "${project.build.directory}", required = true)
-    private File buildDir;
+    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
+    private File outputDir;
 
-    @Parameter(property = "application", required = true)
+    @Parameter(property = "application")
     private String application;
+
+    @Parameter(property = "hostModule")
+    private String hostModule;
 
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
 
-        File licenseFile = new File(basedir, "LICENSE");
+        if (!"jar".equals(project.getPackaging())) {
+            return;
+        }
+
+        if (application == null || application.isBlank()) {
+            throw new MojoExecutionException("Application name must be specified using the 'application' parameter.");
+        }
+        if (hostModule == null || hostModule.isBlank()) {
+            throw new MojoExecutionException("Host module name must be specified using the 'hostModule' parameter.");
+        }
+
+
+        File licenseFile = new File(basedir, LICENSE_FILE);
         if (!licenseFile.exists()) {
             throw new MojoExecutionException("License file not found: " + licenseFile.getAbsolutePath());
         }
@@ -59,16 +79,52 @@ public class ManifestMojo extends AbstractMojo {
             .licenseName(project.getLicenses().getFirst().getName())
             .licenseText(Files.readString(new File(basedir, "LICENSE").toPath()))
             .application(application)
+            .hostModule(hostModule)
             .url(project.getUrl())
+            .artifacts(computeDependencies())
+            .extensions(readExtensions())
             .build();
-        File manifestFile = new File(buildDir, PluginFile.PLUGIN_MANIFEST_FILE);
+        File manifestFile = new File(outputDir, PluginFile.PLUGIN_MANIFEST_FILE);
         try (var writer = Files.newBufferedWriter(manifestFile.toPath())) {
             manifest.write(writer);
         }
     }
 
 
+    private Map<String, List<String>> readExtensions() throws IOException {
+        Map<String,List<String>> result = new HashMap<>();
+        File extensionsFile = new File(outputDir, "META-INF/extensions");
+        if (extensionsFile.exists()) {
+            List<String> lines = Files.readAllLines(extensionsFile.toPath());
+            for (String line : lines) {
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    String extensionPoint = parts[0].trim();
+                    String extensions = parts[1].trim();
+                    result.computeIfAbsent(extensionPoint, k -> new java.util.ArrayList<>())
+                        .addAll(List.of(extensions.split(",")));
+                } else {
+                    getLog().warn("Invalid extension format: " + line);
+                }
+            }
+         }
+        return result;
+    }
 
+
+    private Map<String, List<String>> computeDependencies() {
+        Map<String,List<String>> artifacts = new HashMap<>();
+        for (var dependency : project.getDependencies()) {
+            if ("compile".equals(dependency.getScope()) || "runtime".equals(dependency.getScope())) {
+                artifacts.computeIfAbsent(dependency.getGroupId(), k -> new java.util.ArrayList<>())
+                        .add(dependency.getArtifactId() + "-" + dependency.getVersion()+ ".jar");
+            }
+        }
+        artifacts.computeIfAbsent(project.getGroupId(), k -> new java.util.ArrayList<>())
+                .add(project.getArtifactId() + "-" + project.getVersion() + ".jar");
+
+        return artifacts;
+    }
 
 
     private void validateProject(MavenProject project) throws MojoExecutionException {
@@ -81,6 +137,8 @@ public class ManifestMojo extends AbstractMojo {
         assertNotEmpty(project.getLicenses(), "Project licenses must not be null");
         assertNotEmpty(project.getLicenses().getFirst().getName(), "Project license name must not be null");
         assertNotEmpty(project.getUrl(), "Project URL must not be null");
+        assertNotEmpty(application, "Application name must not be null");
+        assertNotEmpty(hostModule, "Host module name must not be null");
     }
 
 

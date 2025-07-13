@@ -43,6 +43,11 @@
             <version>3.6.4</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.myjtools</groupId>
+            <artifactId>maven-fetcher</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -50,7 +55,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.13.1</version>
             </plugin>
         </plugins>
     </build>
