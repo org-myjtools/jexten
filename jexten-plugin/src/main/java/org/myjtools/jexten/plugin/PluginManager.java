@@ -11,13 +11,13 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class PluginManager implements ModuleLayerProvider {
+
+
 
 
     private static final Logger log = LoggerFactory.getLogger(PluginManager.class);
@@ -25,14 +25,17 @@ public class PluginManager implements ModuleLayerProvider {
     private final String application;
     private final Path artifactDirectory;
     private final Path manifestDirectory;
-    private final Map<PluginID, PluginModuleLayer> plugins = new HashMap<>();
-
+    private final PluginMap pluginMap;
     private ArtifactStore artifactStore;
 
-    public PluginManager(String application, Path pluginDirectory) {
+
+
+
+    public PluginManager(String application, ClassLoader parentClassLoader, Path pluginDirectory) {
         try {
             log.info("Preparing PluginManager for {} using directory {}",application,pluginDirectory);
             this.application = application;
+            this.pluginMap = new PluginMap(parentClassLoader);
             this.artifactDirectory = pluginDirectory.resolve("artifacts");
             this.manifestDirectory = pluginDirectory.resolve("manifests");
             Files.createDirectories(artifactDirectory);
@@ -44,6 +47,7 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
     private void discoverInstalledPlugins() {
+        pluginMap.clear();
         try (var walker = Files.walk(manifestDirectory)) {
             walker.forEach(this::discoverInstalledPlugin);
         } catch (IOException e) {
@@ -55,8 +59,11 @@ public class PluginManager implements ModuleLayerProvider {
         if (Files.isRegularFile(path)) {
             try (Reader reader = Files.newBufferedReader(path)) {
                 PluginManifest plugin = PluginManifest.read(reader);
+                if (!validatePluginApplication(plugin)) {
+                    return;
+                }
                 checkArtifacts(plugin);
-                plugins.put(plugin.id(),pluginModuleLayer(plugin));
+                pluginMap.add(buildPlugin(plugin));
                 log.info("Plugin {} {} prepared.", plugin.id(), plugin.version());
             } catch (Exception e) {
                 log.error("Error reading plugin manifest file {}", path, e);
@@ -72,14 +79,14 @@ public class PluginManager implements ModuleLayerProvider {
      */
     public void refresh() {
         log.info("Refreshing Plugin Manager contents");
-        plugins.clear();
+        pluginMap.clear();
         discoverInstalledPlugins();
     }
 
 
     @Override
     public Stream<ModuleLayer> moduleLayers() {
-        return Stream.empty(); // TODO
+        return pluginMap.layers();
     }
 
 
@@ -112,6 +119,9 @@ public class PluginManager implements ModuleLayerProvider {
         try {
             PluginJarFile bundle = PluginJarFile.read(jarFile);
             PluginManifest manifest = bundle.plugin();
+            if (!validatePluginApplication(manifest)) {
+                return;
+            }
             Path manifestFile = manifestPath(manifest.id());
             installPluginManifest(manifest,manifestFile);
             installArtifact(manifest.group(),jarFile);
@@ -136,14 +146,14 @@ public class PluginManager implements ModuleLayerProvider {
             );
         }
 
-        if (plugins.containsKey(pluginID)) {
-            Version existingVersion = plugins.get(pluginID).plugin().version();
+        if (pluginMap.containsKey(pluginID)) {
+            Version existingVersion = pluginMap.getVersion(pluginID).orElseThrow();
             if (existingVersion.compareTo(candidateVersion) >= 0) {
                 log.warn("Plugin {} already present with version {}", pluginID, existingVersion);
             } else {
                 log.info("Updating plugin {} from version {} to {}", pluginID, existingVersion, candidateVersion);
                 Files.deleteIfExists(manifestFile);
-                plugins.remove(pluginID);
+                pluginMap.remove(pluginID);
             }
         } else {
             log.info("Installing plugin {} version {}", pluginID, candidateVersion);
@@ -152,7 +162,7 @@ public class PluginManager implements ModuleLayerProvider {
         try (Writer writer = Files.newBufferedWriter(manifestFile)) {
             manifest.write(writer);
         }
-        plugins.put(pluginID, pluginModuleLayer(manifest));
+        pluginMap.add(buildPlugin(manifest));
     }
 
 
@@ -190,11 +200,11 @@ public class PluginManager implements ModuleLayerProvider {
      * @param pluginID The ID of the plugin to remove
      */
     public void removePlugin(PluginID pluginID) {
-        if (!plugins.containsKey(pluginID)) {
+        if (!pluginMap.containsKey(pluginID)) {
             throw new PluginException("Plugin {} is not present", pluginID);
         }
         try {
-            plugins.remove(pluginID);
+            pluginMap.remove(pluginID);
             Files.deleteIfExists(manifestPath(pluginID));
             log.info("Removed plugin {}", pluginID);
         } catch (IOException e) {
@@ -231,10 +241,8 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
-
-
-    public Optional<PluginManifest> getPlugin(PluginID pluginID) {
-        return Optional.ofNullable(plugins.get(pluginID)).map(PluginModuleLayer::plugin);
+    public Optional<PluginManifest> getPluginManifest(PluginID pluginID) {
+        return pluginMap.get(pluginID).map(Plugin::manifest);
     }
 
 
@@ -244,30 +252,47 @@ public class PluginManager implements ModuleLayerProvider {
 
 
 
-    private PluginModuleLayer pluginModuleLayer(PluginManifest plugin) {
+    private Plugin buildPlugin(PluginManifest plugin) {
         List<Path> artifactPaths = plugin.artifacts().entrySet().stream().flatMap(
             entry -> entry.getValue().stream()
             .map(artifact -> artifactDirectory.resolve(entry.getKey()).resolve(artifact + ".jar"))
         ).toList();
-        return new PluginModuleLayer(plugin,artifactPaths);
+        return new Plugin(plugin,artifactPaths);
     }
 
 
     private void checkArtifacts(PluginManifest plugin) {
-        plugin.artifacts().forEach((group,artifacts)->{
-            artifacts.forEach(artifact -> {
-                String file = artifact + ".jar";
-                if (Files.notExists(artifactDirectory.resolve(group).resolve(file))) {
-                    throw new PluginException(
-                        "Cannot load plugin {} : artifact {}/{} not present; please reinstall the plugin",
-                        plugin.id(),
-                        group,
-                        artifact
-                    );
-                }
-            });
+        plugin.artifacts().forEach((group,artifacts)-> {
+            artifacts.forEach(artifact -> checkArtifact(plugin, group, artifact));
         });
     }
 
+    private void checkArtifact(PluginManifest plugin, String group, String artifact) {
+        String file = artifact + ".jar";
+        if (Files.notExists(artifactDirectory.resolve(group).resolve(file))) {
+            throw new PluginException(
+                "Cannot load plugin {} : artifact {}/{} not present; please reinstall the plugin",
+                plugin.id(),
+                    group,
+                    artifact
+            );
+        }
+    }
+
+
+
+
+    private boolean validatePluginApplication(PluginManifest manifest) {
+        if (!manifest.application().equals(this.application)) {
+           log.warn(
+                "Plugin {} not suitable to the application module '{}' but '{}'",
+                manifest.id(),
+                this.application,
+                manifest.application()
+           );
+           return false;
+        }
+        return true;
+    }
 
 }

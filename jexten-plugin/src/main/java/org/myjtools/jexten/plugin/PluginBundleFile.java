@@ -24,6 +24,7 @@ public final class PluginBundleFile extends PluginFile {
         }
         var file = new PluginBundleFile(path);
         file.read();
+        Objects.requireNonNull(file.plugin);
         return file;
     }
 

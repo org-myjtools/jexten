@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class PluginManifest {
 
@@ -130,4 +131,15 @@ public class PluginManifest {
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        PluginManifest manifest = (PluginManifest) o;
+        return Objects.equals(group, manifest.group) && Objects.equals(name, manifest.name) && Objects.equals(version, manifest.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(group, name, version);
+    }
 }

@@ -5,21 +5,19 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.myjtools.jexten</groupId>
-        <artifactId>jexten-plugin-parent</artifactId>
+        <groupId>org.myjtools</groupId>
+        <artifactId>myjtools-parent</artifactId>
         <version>1.0.0</version>
     </parent>
 
+    <properties>
+        <enforcer.skip>true</enforcer.skip>
+    </properties>
 
     <groupId>org.myjtools.jexten.example</groupId>
     <artifactId>jexten-example-plugin-a</artifactId>
     <version>1.0.0</version>
-
-    <properties>
-        <jexten.application>org.myjtools.jexten.example</jexten.application>
-        <jexten.hostModule>org.myjtools.jexten.example</jexten.hostModule>
-        <jexten.hostArtifact>org.myjtools.jexten.example:jexten-example-app</jexten.hostArtifact>
-    </properties>
+    <packaging>jar</packaging>
 
     <licenses>
         <license>
@@ -27,6 +25,55 @@
         </license>
     </licenses>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.myjtools.jexten.example</groupId>
+            <artifactId>jexten-example-app</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.myjtools.jexten</groupId>
+            <artifactId>jexten-processor</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.myjtools.jexten</groupId>
+                            <artifactId>jexten-processor</artifactId>
+                            <version>1.0.0</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.myjtools.jexten</groupId>
+                <artifactId>jexten-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-manifest</goal>
+                            <goal>assemble-bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <application>org.myjtools.jexten.example</application>
+                    <hostModule>org.myjtools.jexten.example</hostModule>
+                    <hostArtifact>org.myjtools.jexten.example:jexten-example-app</hostArtifact>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

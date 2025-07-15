@@ -117,11 +117,11 @@ public class ManifestMojo extends AbstractMojo {
         for (var dependency : project.getDependencies()) {
             if ("compile".equals(dependency.getScope()) || "runtime".equals(dependency.getScope())) {
                 artifacts.computeIfAbsent(dependency.getGroupId(), k -> new java.util.ArrayList<>())
-                        .add(dependency.getArtifactId() + "-" + dependency.getVersion()+ ".jar");
+                        .add(dependency.getArtifactId() + "-" + dependency.getVersion());
             }
         }
         artifacts.computeIfAbsent(project.getGroupId(), k -> new java.util.ArrayList<>())
-                .add(project.getArtifactId() + "-" + project.getVersion() + ".jar");
+                .add(project.getArtifactId() + "-" + project.getVersion());
 
         return artifacts;
     }

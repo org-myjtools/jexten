@@ -25,7 +25,6 @@
         <module>jexten-core</module>
         <module>jexten-plugin</module>
         <module>jexten-maven-plugin</module>
-        <module>jexten-plugin-parent</module>
     </modules>
 
 

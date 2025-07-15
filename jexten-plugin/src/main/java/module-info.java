@@ -4,5 +4,6 @@ module org.myjtools.jexten.plugin {
     requires org.yaml.snakeyaml;
     requires org.slf4j;
     requires java.net.http;
+    requires jdk.compiler;
     opens org.myjtools.jexten.plugin to org.yaml.snakeyaml;
 }

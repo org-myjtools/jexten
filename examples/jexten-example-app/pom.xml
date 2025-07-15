@@ -14,7 +14,22 @@
     <artifactId>jexten-example-app</artifactId>
     <version>1.0.0</version>
 
+    <properties>
+        <enforcer.skip>true</enforcer.skip>
+    </properties>
+
+
     <dependencies>
+        <dependency>
+            <groupId>org.myjtools.jexten</groupId>
+            <artifactId>jexten-plugin</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
+        </dependency>
         <dependency>
             <groupId>org.myjtools.jexten</groupId>
             <artifactId>jexten-processor</artifactId>

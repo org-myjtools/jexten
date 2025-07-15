@@ -14,6 +14,7 @@ import org.myjtools.mavenfetcher.MavenFetchResult;
 import org.myjtools.mavenfetcher.MavenFetcher;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -33,6 +34,9 @@ public class BundleMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${project.build.directory}", readonly = true, required = true)
     private File buildDirectory;
+
+    @Parameter(defaultValue = "${project.build.outputDirectory}", readonly = true, required = true)
+    private File outputDirectory;
 
     @Parameter(property = "hostArtifact")
     private String hostArtifact;
@@ -68,9 +72,10 @@ public class BundleMojo extends AbstractMojo {
 
 
         File bundleFile = new File(buildDirectory, project.getArtifactId()+"-bundle-"+project.getVersion() + ".zip");
-
+        getLog().info("Creating bundle file: " + bundleFile.getAbsolutePath());
 
         try (var zipOut = new ZipOutputStream(new FileOutputStream(bundleFile))) {
+            addZipEntry(outputDirectory.toPath().resolve("plugin.yaml"), zipOut);
             File jar = new File(buildDirectory, project.getArtifactId() + "-" + project.getVersion() + ".jar");
             addZipEntry(jar.toPath(), zipOut);
             Set<FetchedArtifact> fetchedArtifacts = new HashSet<>();
@@ -92,17 +97,30 @@ public class BundleMojo extends AbstractMojo {
         };
     }
 
-    private static void addZipEntry(Path path, ZipOutputStream  zipOut) {
+    private void addZipEntry(Path path, ZipOutputStream zipOut) {
         try {
-            File fileToZip = path.toFile();
-            try (var fis = new FileInputStream(fileToZip)) {
-                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+            if (Files.notExists(path)) {
+                throw new FileNotFoundException("File not found: " + path.toAbsolutePath());
+            }
+            getLog().info("Adding file to bundle: " + path.toAbsolutePath());
+            File file = path.toFile();
+            try (FileInputStream fis = new FileInputStream(file)) {
+                ZipEntry zipEntry = new ZipEntry(file.getName());
                 zipOut.putNextEntry(zipEntry);
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = fis.read(buffer)) > 0) {
+                    zipOut.write(buffer, 0, len);
+                }
+                zipOut.closeEntry();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+
+
 
 
 }

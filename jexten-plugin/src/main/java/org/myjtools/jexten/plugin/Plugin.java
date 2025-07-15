@@ -12,17 +12,17 @@ import java.util.Optional;
 import java.util.Set;
 
 
-public class PluginModuleLayer {
+public class Plugin {
 
-    public static final Logger log = LoggerFactory.getLogger(PluginModuleLayer.class);
+    public static final Logger log = LoggerFactory.getLogger(Plugin.class);
 
     private final ModuleFinder moduleFinder;
     private final Set<ModuleReference> moduleReferences;
-    private final PluginManifest plugin;
+    private final PluginManifest manifest;
 
 
-    public PluginModuleLayer(PluginManifest plugin, List<Path> artifactPaths) {
-        this.plugin = plugin;
+    public Plugin(PluginManifest manifest, List<Path> artifactPaths) {
+        this.manifest = manifest;
         this.moduleFinder = ModuleFinder.of(artifactPaths.toArray(Path[]::new));
         this.moduleReferences = moduleFinder.findAll();
     }
@@ -31,8 +31,8 @@ public class PluginModuleLayer {
      * Get the plugin manifest that describes the plugin.
      * @return The plugin manifest
      */
-    public PluginManifest plugin() {
-        return plugin;
+    public PluginManifest manifest() {
+        return manifest;
     }
 
 
@@ -56,8 +56,9 @@ public class PluginModuleLayer {
     public boolean isHostedBy(ModuleLayer moduleLayer) {
         return moduleLayer.modules().stream()
             .map(Module::getName)
-            .anyMatch(plugin.hostModule()::equals);
+            .anyMatch(manifest.hostModule()::equals);
     }
+
 
 
     /**
@@ -65,7 +66,7 @@ public class PluginModuleLayer {
      * @return Either the module layer or an empty optional if it could not be created for any reason
      */
     public Optional<ModuleLayer> buildModuleLayer(ModuleLayer parentLayer, ClassLoader parentClassLoader) {
-        log.debug("building module layer for plugin {} with modules: {}", plugin.id(), moduleNames(parentLayer));
+        log.debug("building module layer for plugin {} with modules: {}", manifest.id(), moduleNames(parentLayer));
         try {
             return Optional.of(parentLayer.defineModulesWithOneLoader(
                 parentLayer.configuration().resolve(this.moduleFinder, ModuleFinder.of(), moduleNames(parentLayer)),

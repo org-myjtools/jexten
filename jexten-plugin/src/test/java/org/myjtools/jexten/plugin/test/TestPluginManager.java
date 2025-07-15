@@ -19,7 +19,7 @@ public class TestPluginManager {
 
     @Test
     public void installPluginFromBundleFile() {
-        PluginManager pluginManager = new PluginManager("Plugin-Application",tempDir);
+        PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
         pluginManager.installPluginFromBundle(Path.of("src/test/resources/plugin.zip"));
         assertThat(tempDir.resolve("artifacts/assertj/assertj-core-3.27.1.jar")).exists();
         assertThat(tempDir.resolve("artifacts/slf4j/slf4j-simple-2.0.16.jar")).exists();
@@ -29,17 +29,17 @@ public class TestPluginManager {
 
     @Test
     public void removePlugin() {
-        PluginManager pluginManager = new PluginManager("Plugin-Application",tempDir);
+        PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
         pluginManager.installPluginFromBundle(Path.of("src/test/resources/plugin.zip"));
         var pluginID = new PluginID("Plugin-Group", "Plugin-Name");
         pluginManager.removePlugin(pluginID);
-        assertThat(pluginManager.getPlugin(pluginID)).isEmpty();
+        assertThat(pluginManager.getPluginManifest(pluginID)).isEmpty();
         assertThat(tempDir.resolve("manifests/Plugin-Group-Plugin-Name.yaml")).doesNotExist();
     }
 
     @Test
     public void installPluginFromJar() {
-        PluginManager pluginManager = new PluginManager("Plugin-Application",tempDir);
+        PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
         pluginManager.setArtifactStore(request-> Map.of(
             "assertj", List.of(Path.of("src/test/resources/mock_repo/assertj-core-3.27.1.jar")),
             "slf4j",   List.of(Path.of("src/test/resources/mock_repo/slf4j-simple-2.0.16.jar"))
