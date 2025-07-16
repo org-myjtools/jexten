@@ -15,7 +15,7 @@
     </properties>
 
     <groupId>org.myjtools.jexten.example</groupId>
-    <artifactId>jexten-example-plugin-a</artifactId>
+    <artifactId>jexten-example-plugin-b</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.16.1</version>
+            <version>2.15.1</version>
         </dependency>
         <dependency>
             <groupId>org.myjtools.jexten</groupId>

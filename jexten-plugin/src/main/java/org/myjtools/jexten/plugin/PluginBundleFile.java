@@ -80,9 +80,17 @@ public final class PluginBundleFile extends PluginFile {
     private void extract(ZipFile zipFile, ZipEntry zipEntry, Path targetFolder) {
         try {
             Path newPath = FileUtil.zipSlipProtect(zipEntry, targetFolder);
-            if (newPath.toString().endsWith(".jar")) {
+            String filename = newPath.getFileName().toString();
+            if (filename.endsWith(".jar")) {
                 String group = findArtifactGroup(newPath);
-                newPath = newPath.getParent().resolve(group).resolve(newPath.getFileName());
+                String name = findArtifactName(newPath);
+                String version = findArtifactVersion(newPath);
+                newPath = newPath
+                        .getParent()
+                        .resolve(group)
+                        .resolve(name)
+                        .resolve(version)
+                        .resolve(newPath.getFileName());
                 if (Files.exists(newPath)) {
                     return;
                 }
@@ -100,6 +108,16 @@ public final class PluginBundleFile extends PluginFile {
             .findFirst()
             .map(Map.Entry::getKey)
             .orElse(null);
+    }
+
+    static String findArtifactName(Path artifact) {
+        String filename = artifact.getFileName().toString();
+        return filename.substring(0,filename.lastIndexOf('-'));
+    }
+
+    static String findArtifactVersion(Path artifact) {
+        String filename = artifact.getFileName().toString().replace(".jar","");
+        return filename.substring(filename.lastIndexOf('-') + 1);
     }
 
 

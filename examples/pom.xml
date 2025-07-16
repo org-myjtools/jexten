@@ -17,6 +17,9 @@
     <modules>
         <module>jexten-example-app</module>
         <module>jexten-example-plugin-a</module>
+        <module>jexten-example-plugin-b</module>
+        <module>jexten-example-plugin-c</module>
+        <module>jexten-example-plugin-c1</module>
     </modules>
 
 

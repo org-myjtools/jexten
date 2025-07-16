@@ -15,6 +15,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.myjtools.jexten.plugin.PluginBundleFile.findArtifactName;
+import static org.myjtools.jexten.plugin.PluginBundleFile.findArtifactVersion;
+
 public class PluginManager implements ModuleLayerProvider {
 
 
@@ -101,8 +104,8 @@ public class PluginManager implements ModuleLayerProvider {
             PluginManifest manifest = bundle.plugin();
             PluginID pluginID = manifest.id();
             Path manifestFile = manifestPath(pluginID);
-            installPluginManifest(manifest,manifestFile);
             bundle.extract(artifactDirectory);
+            installPluginManifest(manifest,manifestFile);
         } catch (IOException  e) {
             throw new PluginException(e, "Cannot install plugin from file {}", bundleFile);
         }
@@ -167,14 +170,19 @@ public class PluginManager implements ModuleLayerProvider {
 
 
     private void installArtifact(String group, Path jarFile) {
-        Path groupDirectory = artifactDirectory.resolve(group);
+        String name = findArtifactName(jarFile);
+        String version = findArtifactVersion(jarFile);
+        Path newPath = artifactDirectory
+            .resolve(group)
+            .resolve(name)
+            .resolve(version)
+            .resolve(jarFile.getFileName());
         try {
-            Files.createDirectories(groupDirectory);
-            Path targetFile = groupDirectory.resolve(jarFile.getFileName());
-            Files.copy(jarFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-            log.info("Installed artifact {} in {}", jarFile.getFileName(), groupDirectory);
+            Files.createDirectories(newPath.getParent());
+            Files.copy(jarFile, newPath, StandardCopyOption.REPLACE_EXISTING);
+            log.info("Installed artifact {} in {}", jarFile.getFileName(), newPath);
         } catch (IOException e) {
-            throw new PluginException(e, "Cannot install artifact {} in {}", jarFile, groupDirectory);
+            throw new PluginException(e, "Cannot install artifact {} in {}", jarFile, newPath);
         }
     }
 
@@ -255,8 +263,11 @@ public class PluginManager implements ModuleLayerProvider {
     private Plugin buildPlugin(PluginManifest plugin) {
         List<Path> artifactPaths = plugin.artifacts().entrySet().stream().flatMap(
             entry -> entry.getValue().stream()
-            .map(artifact -> artifactDirectory.resolve(entry.getKey()).resolve(artifact + ".jar"))
-        ).toList();
+            .map(artifact -> artifactDirectory
+                    .resolve(entry.getKey())
+                    .resolve(findArtifactName(Path.of(artifact)))
+                    .resolve(findArtifactVersion(Path.of(artifact)))
+            )).toList();
         return new Plugin(plugin,artifactPaths);
     }
 

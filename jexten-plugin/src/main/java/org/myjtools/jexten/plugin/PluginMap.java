@@ -1,6 +1,7 @@
 package org.myjtools.jexten.plugin;
 
 import org.myjtools.jexten.Version;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,7 +12,7 @@ import java.util.stream.Stream;
 public class PluginMap {
 
 
-
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger("org.myjtools.jexten.plugin");
 
     record PluginModuleLayer(Plugin plugin, ModuleLayer moduleLayer) {   }
 
@@ -68,8 +69,10 @@ public class PluginMap {
 
 
     private void buildPluginMap() {
+        log.debug("Building plugin map with {} plugins", pluginsByID.size());
         computeModuleLayers();
         this.moduleLayerTree = new ModuleLayerTree(layersByPlugin);
+        log.debug(this.moduleLayerTree.description());
     }
 
 

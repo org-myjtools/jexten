@@ -22,9 +22,15 @@ public class Plugin {
 
 
     public Plugin(PluginManifest manifest, List<Path> artifactPaths) {
+        log.debug("Creating plugin {} with artifacts: {}", manifest.id(), artifactPaths);
         this.manifest = manifest;
         this.moduleFinder = ModuleFinder.of(artifactPaths.toArray(Path[]::new));
         this.moduleReferences = moduleFinder.findAll();
+        if (moduleReferences.isEmpty()) {
+            log.warn("Plugin {} has no modules to load", manifest.id());
+        } else {
+            log.debug("Plugin {} has {} modules to load", manifest.id(), moduleReferences.size());
+        }
     }
 
     /**
@@ -42,7 +48,7 @@ public class Plugin {
      */
     public List<String> moduleNames(ModuleLayer parentLayer) {
         var parentModules = parentLayer.modules().stream().map(Module::getName).toList();
-        return moduleReferences
+       return moduleReferences
                 .stream()
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
@@ -78,4 +84,13 @@ public class Plugin {
         }
     }
 
+    public Set<ModuleReference> moduleReferences() {
+        return moduleReferences;
+    }
+
+
+    @Override
+    public String toString() {
+        return manifest.id().toString();
+    }
 }

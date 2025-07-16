@@ -5,6 +5,6 @@ import org.myjtools.jexten.ExtensionPoint;
 @ExtensionPoint
 public interface Greeter {
 
-    String greet(String name);
+    void greet(String name);
 
 }
