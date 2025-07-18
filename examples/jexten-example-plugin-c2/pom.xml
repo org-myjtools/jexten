@@ -15,7 +15,7 @@
     </properties>
 
     <groupId>org.myjtools.jexten.example</groupId>
-    <artifactId>jexten-example-plugin-c1</artifactId>
+    <artifactId>jexten-example-plugin-c2</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 

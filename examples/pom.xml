@@ -20,6 +20,7 @@
         <module>jexten-example-plugin-b</module>
         <module>jexten-example-plugin-c</module>
         <module>jexten-example-plugin-c1</module>
+        <module>jexten-example-plugin-c2</module>
     </modules>
 
 

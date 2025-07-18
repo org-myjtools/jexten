@@ -93,7 +93,7 @@ public class DefaultExtensionManager implements ExtensionManager {
 		return getExtensions(
 			extensionPoint,
 			filter,
-			new InjectionHandler(this,injectionProvider,LOGGER)
+			new InjectionHandler(this,injectionProvider,layerProvider,LOGGER)
 		);
 	}
 

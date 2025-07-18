@@ -23,6 +23,7 @@ public class InjectionHandler {
     );
 
     private static final Object[] EMPTY_ARRAY = new Object[0];
+    private final ModuleLayerProvider layerProvider;
 
 
     public record InjectionRequest (
@@ -44,10 +45,12 @@ public class InjectionHandler {
     public InjectionHandler(
         DefaultExtensionManager extensionManager,
         InjectionProvider externalInjectionProvider,
+        ModuleLayerProvider layerProvider,
         Logger logger
     ) {
         this.extensionManager = extensionManager;
         this.externalInjectionProvider = externalInjectionProvider;
+        this.layerProvider = layerProvider;
         this.logger = logger;
     }
 
@@ -162,7 +165,7 @@ public class InjectionHandler {
 
 
 
-    private static InjectionRequest requestFromField(Field field) throws ClassNotFoundException {
+    private InjectionRequest requestFromField(Field field) throws ClassNotFoundException {
         var effectiveType = effectiveType(field.getType(), field.getGenericType());
         var annotation = field.getAnnotation(Inject.class);
         return new InjectionRequest(
@@ -185,14 +188,19 @@ public class InjectionHandler {
     }
 
 
-    private static Class<?> effectiveType(Class<?> type, Type genericType) throws ClassNotFoundException {
+    private Class<?> effectiveType(Class<?> type, Type genericType) throws ClassNotFoundException {
         if (type.isArray()) {
             return type.componentType();
         }
         if (type == List.class || type == Set.class || type == Collection.class) {
             var genericTypeMatcher = GENERIC_NAME.matcher(genericType.getTypeName());
             if (genericTypeMatcher.matches()) {
-                return Class.forName(genericTypeMatcher.group(1));
+                Class<?> clazz = layerProvider.getClass(genericTypeMatcher.group(1));
+                if (clazz != null) {
+                    return clazz;
+                } else {
+                    throw new ClassNotFoundException("Cannot find class for type "+genericTypeMatcher.group(1));
+                }
             } else {
                 throw new ClassNotFoundException("Raw use of parametrized type "+type.getSimpleName());
             }

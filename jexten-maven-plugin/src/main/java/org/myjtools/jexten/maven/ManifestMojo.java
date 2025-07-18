@@ -40,6 +40,8 @@ public class ManifestMojo extends AbstractMojo {
     @Parameter(property = "hostModule")
     private String hostModule;
 
+    @Parameter(property = "hostArtifact")
+    private String hostArtifact;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -83,6 +85,7 @@ public class ManifestMojo extends AbstractMojo {
             .url(project.getUrl())
             .artifacts(computeDependencies())
             .extensions(readExtensions())
+            .extensionPoints(readExtensionPoints())
             .build();
         File manifestFile = new File(outputDir, PluginFile.PLUGIN_MANIFEST_FILE);
         try (var writer = Files.newBufferedWriter(manifestFile.toPath())) {
@@ -112,10 +115,22 @@ public class ManifestMojo extends AbstractMojo {
     }
 
 
+    private List<String> readExtensionPoints() throws IOException {
+        File extensionPointsFile = new File(outputDir, "META-INF/extension-points");
+        if (!extensionPointsFile.exists()) {
+            return List.of();
+        }
+        return Files.readAllLines(extensionPointsFile.toPath());
+    }
+
+
     private Map<String, List<String>> computeDependencies() {
         Map<String,List<String>> artifacts = new HashMap<>();
         for (var dependency : project.getDependencies()) {
             if ("compile".equals(dependency.getScope()) || "runtime".equals(dependency.getScope())) {
+                if ((dependency.getGroupId()+":"+dependency.getArtifactId()).equals(hostArtifact)) {
+                    continue;
+                }
                 artifacts.computeIfAbsent(dependency.getGroupId(), k -> new java.util.ArrayList<>())
                         .add(dependency.getArtifactId() + "-" + dependency.getVersion());
             }

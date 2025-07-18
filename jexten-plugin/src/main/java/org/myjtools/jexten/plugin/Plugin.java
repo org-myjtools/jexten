@@ -22,7 +22,10 @@ public class Plugin {
 
 
     public Plugin(PluginManifest manifest, List<Path> artifactPaths) {
-        log.debug("Creating plugin {} with artifacts: {}", manifest.id(), artifactPaths);
+        if (log.isDebugEnabled()) {
+            var artifactPathsString = artifactPaths.stream().map(it -> it.getFileName().toString()).toList();
+            log.debug("Creating plugin {} with artifacts: {}", manifest.id(), artifactPaths);
+        }
         this.manifest = manifest;
         this.moduleFinder = ModuleFinder.of(artifactPaths.toArray(Path[]::new));
         this.moduleReferences = moduleFinder.findAll();
@@ -73,6 +76,7 @@ public class Plugin {
      */
     public Optional<ModuleLayer> buildModuleLayer(ModuleLayer parentLayer, ClassLoader parentClassLoader) {
         log.debug("building module layer for plugin {} with modules: {}", manifest.id(), moduleNames(parentLayer));
+        log.debug("parent module layer has modules: {}", parentLayer.configuration().modules());
         try {
             return Optional.of(parentLayer.defineModulesWithOneLoader(
                 parentLayer.configuration().resolve(this.moduleFinder, ModuleFinder.of(), moduleNames(parentLayer)),

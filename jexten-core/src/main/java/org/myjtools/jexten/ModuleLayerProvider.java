@@ -1,5 +1,6 @@
 package org.myjtools.jexten;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -27,5 +28,20 @@ public interface ModuleLayerProvider {
     }
 
     Stream<ModuleLayer> moduleLayers();
+
+    /*
+     * This method is used to locate a class by its name
+     * and return the first found class in the module layers.
+     * @param className the name of the class to locate
+     * @return the class if found, or null if not found
+     */
+    default Class<?> getClass(String className) {
+        return moduleLayers()
+            .flatMap(it -> it.modules().stream())
+            .map(module -> Class.forName(module,className))
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    }
 
 }
