@@ -1,5 +1,8 @@
 package org.myjtools.jexten.plugin;
 
+import org.myjtools.jexten.plugin.internal.PluginBundleFile;
+import org.myjtools.jexten.plugin.internal.PluginJarFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;

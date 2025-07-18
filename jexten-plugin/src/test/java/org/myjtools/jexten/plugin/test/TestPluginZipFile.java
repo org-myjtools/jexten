@@ -2,7 +2,7 @@ package org.myjtools.jexten.plugin.test;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.myjtools.jexten.plugin.PluginBundleFile;
+import org.myjtools.jexten.plugin.internal.PluginBundleFile;
 
 import java.io.IOException;
 import java.nio.file.Path;

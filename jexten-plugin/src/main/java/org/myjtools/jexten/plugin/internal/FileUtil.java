@@ -52,4 +52,13 @@ public class FileUtil {
         Files.copy(zipFile.getInputStream(zipEntry), newPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    public static String findArtifactName(Path artifact) {
+        String filename = artifact.getFileName().toString();
+        return filename.substring(0,filename.lastIndexOf('-'));
+    }
+
+    public static String findArtifactVersion(Path artifact) {
+        String filename = artifact.getFileName().toString().replace(".jar","");
+        return filename.substring(filename.lastIndexOf('-') + 1);
+    }
 }

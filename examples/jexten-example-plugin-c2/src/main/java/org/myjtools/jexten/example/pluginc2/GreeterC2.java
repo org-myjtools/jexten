@@ -12,7 +12,7 @@ public class GreeterC2 implements LocaleGreeter {
 
     @Override
     public void greetInLanguage(String name) {
-        System.out.println("Hola, " + name + " desdde GreeterC2 (en español)!");;
+        System.out.println("¡Hola, " + name + " desde GreeterC2 (en español)!");;
     }
 
 }

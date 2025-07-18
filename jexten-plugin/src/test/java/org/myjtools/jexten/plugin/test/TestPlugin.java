@@ -1,7 +1,7 @@
 package org.myjtools.jexten.plugin.test;
 
 import org.junit.jupiter.api.Test;
-import org.myjtools.jexten.plugin.Plugin;
+import org.myjtools.jexten.plugin.internal.Plugin;
 import org.myjtools.jexten.plugin.PluginManifest;
 
 import java.io.IOException;

@@ -2,6 +2,10 @@ package org.myjtools.jexten.plugin;
 
 import org.myjtools.jexten.ModuleLayerProvider;
 import org.myjtools.jexten.Version;
+import org.myjtools.jexten.plugin.internal.Plugin;
+import org.myjtools.jexten.plugin.internal.PluginBundleFile;
+import org.myjtools.jexten.plugin.internal.PluginJarFile;
+import org.myjtools.jexten.plugin.internal.PluginMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,11 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.myjtools.jexten.plugin.PluginBundleFile.findArtifactName;
-import static org.myjtools.jexten.plugin.PluginBundleFile.findArtifactVersion;
+import static org.myjtools.jexten.plugin.internal.FileUtil.findArtifactName;
+import static org.myjtools.jexten.plugin.internal.FileUtil.findArtifactVersion;
 
 public class PluginManager implements ModuleLayerProvider {
 
@@ -85,6 +88,26 @@ public class PluginManager implements ModuleLayerProvider {
         pluginMap.clear();
         discoverInstalledPlugins();
     }
+
+
+    /**
+     * Get the installed plugins.
+     * @return The plugin map
+     */
+    public Set<PluginID> plugins() {
+        return pluginMap.ids();
+    }
+
+
+    /**
+     * Get the plugin manifest with the given ID.
+     * @param pluginID The ID of the plugin to retrieve
+     * @return An Optional containing the Plugin manifest if found, or empty if not found
+     */
+    public Optional<PluginManifest> getPluginManifest(PluginID pluginID) {
+        return pluginMap.get(pluginID).map(Plugin::manifest);
+    }
+
 
 
     @Override
@@ -249,9 +272,6 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
-    public Optional<PluginManifest> getPluginManifest(PluginID pluginID) {
-        return pluginMap.get(pluginID).map(Plugin::manifest);
-    }
 
 
     private Path manifestPath(PluginID pluginID) {
