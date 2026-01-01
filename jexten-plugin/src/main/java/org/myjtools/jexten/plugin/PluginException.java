@@ -17,7 +17,7 @@ public class PluginException extends RuntimeException {
 
 
     public PluginException(String message, Object... args) {
-        super(String.format(message.replace("{}", "%s"), args));
+        super(message.replace("{}", "%s").formatted(args));
     }
 
 

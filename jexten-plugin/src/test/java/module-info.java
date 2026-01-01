@@ -1,5 +1,6 @@
 module org.myjtools.jexten.plugin.test {
     requires org.junit.jupiter.api;
+    requires org.myjtools.jexten;
     requires org.myjtools.jexten.plugin;
     requires org.yaml.snakeyaml;
     requires org.assertj.core;

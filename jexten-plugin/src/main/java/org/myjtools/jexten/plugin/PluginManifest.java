@@ -8,6 +8,7 @@ import org.yaml.snakeyaml.introspector.BeanAccess;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,10 +56,78 @@ public class PluginManifest {
     }
 
 
+    /**
+     * Reads and validates a plugin manifest from a YAML source.
+     *
+     * @param reader the reader containing the YAML manifest content
+     * @return a validated PluginManifest instance
+     * @throws InvalidManifestException if the manifest fails validation
+     */
     public static PluginManifest read(Reader reader) {
         Yaml yaml = new Yaml();
         yaml.setBeanAccess(BeanAccess.FIELD);
-        return yaml.loadAs(reader, PluginManifest.class);
+        PluginManifest manifest = yaml.loadAs(reader, PluginManifest.class);
+        manifest.validate();
+        return manifest;
+    }
+
+
+    /**
+     * Validates this manifest, checking for required fields and correct formats.
+     *
+     * @throws InvalidManifestException if validation fails
+     */
+    public void validate() {
+        List<String> errors = new ArrayList<>();
+
+        // Required fields
+        if (isBlank(group)) {
+            errors.add("'group' is required");
+        }
+        if (isBlank(name)) {
+            errors.add("'name' is required");
+        }
+        if (isBlank(version)) {
+            errors.add("'version' is required");
+        } else if (!Version.validate(version)) {
+            errors.add("'version' must be a valid semantic version (e.g., '1.0.0'), got: " + version);
+        }
+        if (isBlank(hostModule)) {
+            errors.add("'hostModule' is required");
+        }
+
+        // Validate artifacts map structure
+        if (artifacts != null) {
+            for (var entry : artifacts.entrySet()) {
+                if (isBlank(entry.getKey())) {
+                    errors.add("artifact key cannot be blank");
+                }
+                if (entry.getValue() == null || entry.getValue().isEmpty()) {
+                    errors.add("artifact '" + entry.getKey() + "' must have at least one dependency");
+                }
+            }
+        }
+
+        // Validate extensions map structure
+        if (extensions != null) {
+            for (var entry : extensions.entrySet()) {
+                if (isBlank(entry.getKey())) {
+                    errors.add("extension point key cannot be blank");
+                }
+                if (entry.getValue() == null || entry.getValue().isEmpty()) {
+                    errors.add("extension point '" + entry.getKey() + "' must have at least one implementation");
+                }
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new InvalidManifestException(errors);
+        }
+    }
+
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     public void write(Writer writer) throws IOException {

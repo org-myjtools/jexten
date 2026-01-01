@@ -1,13 +1,8 @@
 package org.myjtools.jexten.plugin.internal;
 
 import org.myjtools.jexten.plugin.PluginException;
-import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -15,8 +10,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class FileUtil {
-
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger("org.myjtools.jexten.plugin");
 
 
     private FileUtil() {
@@ -54,11 +47,17 @@ public class FileUtil {
 
     public static String findArtifactName(Path artifact) {
         String filename = artifact.getFileName().toString();
+        if (filename.lastIndexOf('-') == -1) {
+            throw new IllegalArgumentException("invalid artifact filename: " + filename);
+        }
         return filename.substring(0,filename.lastIndexOf('-'));
     }
 
     public static String findArtifactVersion(Path artifact) {
         String filename = artifact.getFileName().toString().replace(".jar","");
+        if (filename.lastIndexOf('-') == -1) {
+            throw new IllegalArgumentException("invalid artifact filename: " + filename);
+        }
         return filename.substring(filename.lastIndexOf('-') + 1);
     }
 }

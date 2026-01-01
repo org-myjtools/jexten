@@ -32,6 +32,8 @@ public class PluginManager implements ModuleLayerProvider {
     private final Path artifactDirectory;
     private final Path manifestDirectory;
     private final PluginMap pluginMap;
+    private final List<PluginValidator> validators = new ArrayList<>();
+    private final List<PluginListener> listeners = new ArrayList<>();
     private ArtifactStore artifactStore;
 
 
@@ -47,7 +49,7 @@ public class PluginManager implements ModuleLayerProvider {
             Files.createDirectories(artifactDirectory);
             Files.createDirectories(manifestDirectory);
             discoverInstalledPlugins();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw PluginException.wrapper(e);
         }
     }
@@ -125,6 +127,7 @@ public class PluginManager implements ModuleLayerProvider {
         try {
             PluginBundleFile bundle = PluginBundleFile.read(bundleFile);
             PluginManifest manifest = bundle.plugin();
+            runValidators(manifest);
             PluginID pluginID = manifest.id();
             Path manifestFile = manifestPath(pluginID);
             bundle.extract(artifactDirectory);
@@ -148,6 +151,7 @@ public class PluginManager implements ModuleLayerProvider {
             if (!validatePluginApplication(manifest)) {
                 return;
             }
+            runValidators(manifest);
             Path manifestFile = manifestPath(manifest.id());
             installPluginManifest(manifest,manifestFile);
             installArtifact(manifest.group(),jarFile);
@@ -189,6 +193,7 @@ public class PluginManager implements ModuleLayerProvider {
             manifest.write(writer);
         }
         pluginMap.add(buildPlugin(manifest));
+        emitEvent(PluginEvent.installed(manifest));
     }
 
 
@@ -235,9 +240,13 @@ public class PluginManager implements ModuleLayerProvider {
             throw new PluginException("Plugin {} is not present", pluginID);
         }
         try {
+            PluginManifest manifest = pluginMap.get(pluginID)
+                    .map(Plugin::manifest)
+                    .orElseThrow();
             pluginMap.remove(pluginID);
             Files.deleteIfExists(manifestPath(pluginID));
             log.info("Removed plugin {}", pluginID);
+            emitEvent(PluginEvent.removed(manifest));
         } catch (IOException e) {
             throw new PluginException(e, "Cannot remove plugin {}", pluginID);
         }
@@ -272,6 +281,184 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
+    /**
+     * Adds a custom validator to be executed before plugin installation.
+     * <p>
+     * Validators are executed in the order they are added. If any validator
+     * returns an invalid result, the plugin installation is rejected with a
+     * {@link PluginValidationException}.
+     *
+     * @param validator the validator to add
+     * @return this PluginManager for method chaining
+     * @see PluginValidator
+     */
+    public PluginManager addValidator(PluginValidator validator) {
+        validators.add(Objects.requireNonNull(validator, "validator cannot be null"));
+        return this;
+    }
+
+
+    /**
+     * Returns an unmodifiable view of the registered validators.
+     *
+     * @return list of registered validators
+     */
+    public List<PluginValidator> validators() {
+        return Collections.unmodifiableList(validators);
+    }
+
+
+    /**
+     * Runs all registered validators on the given manifest.
+     *
+     * @param manifest the plugin manifest to validate
+     * @throws PluginValidationException if any validator returns an invalid result
+     */
+    private void runValidators(PluginManifest manifest) {
+        if (validators.isEmpty()) {
+            return;
+        }
+
+        ValidationResult result = ValidationResult.valid();
+        for (PluginValidator validator : validators) {
+            result = result.merge(validator.validate(manifest));
+        }
+
+        if (!result.isValid()) {
+            throw new PluginValidationException(manifest.id(), result.errors());
+        }
+    }
+
+
+    /**
+     * Adds a listener to receive plugin lifecycle events.
+     *
+     * @param listener the listener to add
+     * @return this PluginManager for method chaining
+     * @see PluginListener
+     * @see PluginEvent
+     */
+    public PluginManager addListener(PluginListener listener) {
+        listeners.add(Objects.requireNonNull(listener, "listener cannot be null"));
+        return this;
+    }
+
+
+    /**
+     * Removes a previously added listener.
+     *
+     * @param listener the listener to remove
+     * @return true if the listener was removed, false if it was not found
+     */
+    public boolean removeListener(PluginListener listener) {
+        return listeners.remove(listener);
+    }
+
+
+    /**
+     * Emits a plugin event to all registered listeners.
+     */
+    private void emitEvent(PluginEvent event) {
+        for (PluginListener listener : listeners) {
+            try {
+                listener.onPluginEvent(event);
+            } catch (Exception e) {
+                log.warn("Error in plugin listener while handling event {}: {}", event.type(), e.getMessage(), e);
+            }
+        }
+    }
+
+
+    /**
+     * Reloads a plugin by re-reading its manifest and rebuilding its module layer.
+     * <p>
+     * This method allows updating a plugin without restarting the application.
+     * The plugin's manifest is read again from disk, and the module layer is rebuilt.
+     * <p>
+     * <strong>Important:</strong> Existing instances created from the old plugin
+     * classes will not be updated. Callers should clear any caches (such as
+     * {@link org.myjtools.jexten.ExtensionManager#clear()}) after reloading to
+     * ensure new instances are created from the updated plugin.
+     * <p>
+     * Registered {@link PluginListener}s will receive:
+     * <ol>
+     *   <li>An {@link PluginEvent.Type#UNLOADED} event before unloading</li>
+     *   <li>A {@link PluginEvent.Type#RELOADED} event after successful reload</li>
+     * </ol>
+     *
+     * @param pluginID the ID of the plugin to reload
+     * @throws PluginException if the plugin is not installed or cannot be reloaded
+     * @see PluginListener
+     */
+    public void reloadPlugin(PluginID pluginID) {
+        if (!pluginMap.containsKey(pluginID)) {
+            throw new PluginException("Plugin {} is not installed", pluginID);
+        }
+
+        Path manifestFile = manifestPath(pluginID);
+        if (!Files.exists(manifestFile)) {
+            throw new PluginException("Manifest file not found for plugin {}", pluginID);
+        }
+
+        log.info("Reloading plugin {}", pluginID);
+
+        try {
+            // Get old manifest for event
+            PluginManifest oldManifest = pluginMap.get(pluginID)
+                    .map(plugin -> plugin.manifest())
+                    .orElseThrow();
+
+            // Emit unload event
+            emitEvent(PluginEvent.unloaded(oldManifest));
+
+            // Remove old plugin
+            pluginMap.remove(pluginID);
+
+            // Read and validate new manifest
+            try (Reader reader = Files.newBufferedReader(manifestFile)) {
+                PluginManifest newManifest = PluginManifest.read(reader);
+
+                if (!validatePluginApplication(newManifest)) {
+                    throw new PluginException("Plugin {} is not compatible with this application", pluginID);
+                }
+
+                runValidators(newManifest);
+                checkArtifacts(newManifest);
+
+                // Add reloaded plugin
+                pluginMap.add(buildPlugin(newManifest));
+
+                log.info("Plugin {} reloaded successfully", pluginID);
+
+                // Emit reload event
+                emitEvent(PluginEvent.reloaded(newManifest));
+            }
+        } catch (IOException e) {
+            throw new PluginException(e, "Cannot reload plugin {}", pluginID);
+        }
+    }
+
+
+    /**
+     * Reloads all installed plugins.
+     * <p>
+     * This is equivalent to calling {@link #reloadPlugin(PluginID)} for each
+     * installed plugin, but more efficient as it rebuilds the module layer tree
+     * only once at the end.
+     *
+     * @see #reloadPlugin(PluginID)
+     */
+    public void reloadAllPlugins() {
+        log.info("Reloading all plugins");
+        Set<PluginID> pluginIds = new HashSet<>(pluginMap.ids());
+        for (PluginID pluginId : pluginIds) {
+            try {
+                reloadPlugin(pluginId);
+            } catch (PluginException e) {
+                log.error("Failed to reload plugin {}: {}", pluginId, e.getMessage());
+            }
+        }
+    }
 
 
     private Path manifestPath(PluginID pluginID) {
