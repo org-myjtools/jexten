@@ -9,6 +9,9 @@ import java.util.stream.Stream;
  */
 public class Version implements Comparable<Version> {
 
+
+    private static final WeakHashMap<String,Version> CACHE = new WeakHashMap<>();
+
     /**
      * Creates a new instance from a string representation
      * @param version The string representation of the version, like <tt>2.4.1-SNAPSHOT</tt>
@@ -17,9 +20,9 @@ public class Version implements Comparable<Version> {
      */
     public static Version of(String version) {
         if (version == null || version.isBlank()) {
-            return  null;
+           throw new IllegalArgumentException("Version string cannot be null or blank");
         }
-        return new Version(version);
+        return CACHE.computeIfAbsent(version, Version::new);
     }
 
 

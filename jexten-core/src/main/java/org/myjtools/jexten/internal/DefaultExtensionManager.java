@@ -18,7 +18,7 @@ import org.slf4j.*;
 
 public class DefaultExtensionManager implements ExtensionManager {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger(DefaultExtensionManager.class);
+	protected static final Logger log = LoggerFactory.getLogger(DefaultExtensionManager.class);
 
 
 	private final ModuleLayerProvider layerProvider;
@@ -93,7 +93,7 @@ public class DefaultExtensionManager implements ExtensionManager {
 		return getExtensions(
 			extensionPoint,
 			filter,
-			new InjectionHandler(this,injectionProvider,layerProvider,LOGGER)
+			new InjectionHandler(this,injectionProvider,layerProvider, log)
 		);
 	}
 
@@ -137,7 +137,7 @@ public class DefaultExtensionManager implements ExtensionManager {
 			// dynamically declaration of 'use' directive, otherwise it will cause an error
 			thisModule.addUses(type);
 		} catch (ServiceConfigurationError e) {
-			LOGGER.error(
+			log.error(
 				"Cannot register 'use' directive of service {} into module {}",
 				type,
 				thisModule
@@ -197,8 +197,8 @@ public class DefaultExtensionManager implements ExtensionManager {
 			//
 			return Optional.of(type.getConstructor().newInstance());
 		} catch (ReflectiveOperationException e) {
-			LOGGER.error("Cannot instantiate class {} : {}", type.getCanonicalName(), e.toString());
-			LOGGER.debug("{}",e,e);
+			log.error("Cannot instantiate class {} : {}", type.getCanonicalName(), e.toString());
+			log.debug("{}",e,e);
 		}
 		return Optional.empty();
 	}
@@ -227,19 +227,19 @@ public class DefaultExtensionManager implements ExtensionManager {
 			try {
 				method.invoke(extension);
 			} catch (IllegalAccessException e) {
-				LOGGER.error("Cannot execute post construct method {}::{}  : {}",
+				log.error("Cannot execute post construct method {}::{}  : {}",
 					extension.getClass().getCanonicalName(),
 					method.getName(),
 					e.getMessage()
 				);
-				LOGGER.debug("{}",e,e);
+				log.debug("{}",e,e);
 			} catch (InvocationTargetException e) {
-				LOGGER.error("Cannot execute post construct method {}::{}  : {}",
+				log.error("Cannot execute post construct method {}::{}  : {}",
 					extension.getClass().getCanonicalName(),
 					method.getName(),
 					e.getTargetException().getMessage()
 				);
-				LOGGER.debug("{}",e.getTargetException(),e.getTargetException());
+				log.debug("{}",e.getTargetException(),e.getTargetException());
 			}
 		}
 		return extension;
@@ -262,14 +262,14 @@ public class DefaultExtensionManager implements ExtensionManager {
 			validateExtensionMetadata(extensionMetadata,extensionPointMetadata);
 			validExtensions.add(extension);
 			return true;
-		} catch (Exception e) {
-			LOGGER.warn(
+		} catch (IllegalArgumentException e) {
+			log.warn(
 				"Extension {} implementing {} is not valid and it will be ignored",
 				extension.getCanonicalName(),
 				extensionPoint.getCanonicalName()
 			);
-			LOGGER.warn(e.getMessage());
-			LOGGER.debug("{}",e,e);
+			log.warn(e.getMessage());
+			log.debug("{}",e,e);
 			invalidExtensions.add(extension);
 			return false;
 		}
@@ -293,7 +293,8 @@ public class DefaultExtensionManager implements ExtensionManager {
 	}
 
 
-	private void validateAnnotatedWith(Class<?> type, Class<? extends Annotation> annotation) {
+	private void validateAnnotatedWith(Class<?> type, Class<? extends Annotation> annotation)
+    throws IllegalArgumentException {
 		if (!type.isAnnotationPresent(annotation)) {
 			throw new IllegalArgumentException(String.format(
 				"Class %s not annotated with %s",

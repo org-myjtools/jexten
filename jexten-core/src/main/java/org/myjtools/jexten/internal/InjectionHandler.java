@@ -22,7 +22,7 @@ public class InjectionHandler {
         Collection.class
     );
 
-    private static final Object[] EMPTY_ARRAY = new Object[0];
+
     private final ModuleLayerProvider layerProvider;
 
 
@@ -210,8 +210,5 @@ public class InjectionHandler {
 
 
 
-    private static IllegalArgumentException nothingToInjectException(Class<?> type) {
-        return new IllegalArgumentException("There is no extension implementing "+type);
-    }
 
 }

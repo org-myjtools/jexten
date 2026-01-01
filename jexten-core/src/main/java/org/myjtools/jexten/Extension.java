@@ -44,12 +44,29 @@ public @interface Extension {
 
 
     /**
-     * org.myjtools.jexten.Priority used when extensions collide, the highest value have priority
-     * over others.
+     * The priority level used when multiple extensions implement the same extension point.
+     * <p>
+     * When retrieving a single extension via {@link ExtensionManager#getExtension(Class)},
+     * the extension with the highest priority is selected. When retrieving all extensions,
+     * they are sorted by priority (highest first).
+     *
+     * @return the priority level for this extension
+     * @see Priority
      */
     Priority priority() default Priority.NORMAL;
 
 
+    /**
+     * The lifecycle scope that determines how extension instances are created and managed.
+     * <ul>
+     *   <li>{@link Scope#SINGLETON} - One instance shared globally across the application</li>
+     *   <li>{@link Scope#LOCAL} - One instance per ExtensionManager request context</li>
+     *   <li>{@link Scope#TRANSIENT} - New instance created for every request</li>
+     * </ul>
+     *
+     * @return the lifecycle scope for this extension
+     * @see Scope
+     */
     Scope scope() default Scope.LOCAL;
 
 
