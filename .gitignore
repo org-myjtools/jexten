@@ -15,4 +15,12 @@ jexten-core/.mvn/wrapper/maven-wrapper.jar
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
-/.flattened-pom.xml
+
+# Maven flatten plugin
+.flattened-pom.xml
+
+# IntelliJ IDEA
+.idea/
+
+# Project notes
+mejoras.txt
