@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 
 @Mojo(name = "generate-manifest", defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
@@ -79,7 +78,7 @@ public class ManifestMojo extends AbstractMojo {
             .version(project.getVersion())
             .description(project.getDescription())
             .licenseName(project.getLicenses().getFirst().getName())
-            .licenseText(Files.readString(new File(basedir, "LICENSE").toPath()))
+            .licenseText(Files.readString(new File(basedir, LICENSE_FILE).toPath()))
             .application(application)
             .hostModule(hostModule)
             .url(project.getUrl())

@@ -3,10 +3,7 @@ package org.myjtools.jexten.maven;
 import org.apache.maven.model.License;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
@@ -68,13 +65,13 @@ class ManifestMojoTest {
             when(project.getPackaging()).thenReturn("pom");
 
             // Should not throw - just skips
-            mojo.execute();
+            Assertions.assertDoesNotThrow(()->mojo.execute());
         }
 
 
         @Test
         @DisplayName("should process jar packaging")
-        void shouldProcessJarPackaging() throws Exception {
+        void shouldProcessJarPackaging()  {
             when(project.getPackaging()).thenReturn("jar");
 
             // Should throw because application is not set
@@ -117,27 +114,26 @@ class ManifestMojoTest {
         }
 
 
+        void validateModule(String module) throws Exception {
+            setField(mojo, "application", "com.example.app");
+            setField(mojo, "hostModule", module);
+
+            assertThatThrownBy(() -> mojo.execute())
+                    .isInstanceOf(MojoExecutionException.class)
+                    .hasMessageContaining("Host module name must be specified");
+        }
+
         @Test
         @DisplayName("should fail when hostModule is null")
         void shouldFailWhenHostModuleIsNull() throws Exception {
-            setField(mojo, "application", "com.example.app");
-            setField(mojo, "hostModule", null);
-
-            assertThatThrownBy(() -> mojo.execute())
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("Host module name must be specified");
+            validateModule(null);
         }
 
 
         @Test
         @DisplayName("should fail when hostModule is blank")
         void shouldFailWhenHostModuleIsBlank() throws Exception {
-            setField(mojo, "application", "com.example.app");
-            setField(mojo, "hostModule", "");
-
-            assertThatThrownBy(() -> mojo.execute())
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("Host module name must be specified");
+            validateModule("");
         }
 
 
@@ -307,15 +303,15 @@ class ManifestMojoTest {
             assertThat(manifestFile).exists();
 
             String content = Files.readString(manifestFile.toPath());
-            assertThat(content).contains("application: com.example.app");
-            assertThat(content).contains("group: com.example");
-            assertThat(content).contains("name: my-plugin");
-            assertThat(content).contains("version:");
-            assertThat(content).contains("displayName: My Plugin");
-            assertThat(content).contains("description: A test plugin");
-            assertThat(content).contains("licenseName: MIT");
-            assertThat(content).contains("url: https://example.com");
-            assertThat(content).contains("hostModule: com.example.host");
+            assertThat(content).contains("application: com.example.app")
+            .contains("group: com.example")
+            .contains("name: my-plugin")
+            .contains("version:")
+            .contains("displayName: My Plugin")
+            .contains("description: A test plugin")
+            .contains("licenseName: MIT")
+            .contains("url: https://example.com")
+            .contains("hostModule: com.example.host");
         }
 
 
@@ -338,8 +334,7 @@ class ManifestMojoTest {
 
             File manifestFile = new File(outputDir, "plugin.yaml");
             String content = Files.readString(manifestFile.toPath());
-            assertThat(content).contains("licenseText:");
-            assertThat(content).contains("MIT License");
+            assertThat(content).contains("licenseText:").contains("MIT License");
         }
 
 
@@ -368,10 +363,10 @@ class ManifestMojoTest {
 
             File manifestFile = new File(outputDir, "plugin.yaml");
             String content = Files.readString(manifestFile.toPath());
-            assertThat(content).contains("extensions:");
-            assertThat(content).contains("com.example.Greeter:");
-            assertThat(content).contains("com.example.impl.GreeterImpl");
-            assertThat(content).contains("com.example.impl.AnotherGreeter");
+            assertThat(content).contains("extensions:")
+            .contains("com.example.Greeter:")
+            .contains("com.example.impl.GreeterImpl")
+            .contains("com.example.impl.AnotherGreeter");
         }
 
 
@@ -400,9 +395,9 @@ class ManifestMojoTest {
 
             File manifestFile = new File(outputDir, "plugin.yaml");
             String content = Files.readString(manifestFile.toPath());
-            assertThat(content).contains("extensionPoints:");
-            assertThat(content).contains("com.example.Service");
-            assertThat(content).contains("com.example.Repository");
+            assertThat(content).contains("extensionPoints:")
+            .contains("com.example.Service")
+            .contains("com.example.Repository");
         }
     }
 
@@ -447,9 +442,9 @@ class ManifestMojoTest {
 
             File manifestFile = new File(outputDir, "plugin.yaml");
             String content = Files.readString(manifestFile.toPath());
-            assertThat(content).contains("artifacts:");
-            assertThat(content).contains("org.apache.commons:");
-            assertThat(content).contains("commons-lang3-3.14.0");
+            assertThat(content).contains("artifacts:")
+            .contains("org.apache.commons:")
+            .contains("commons-lang3-3.14.0");
         }
 
 

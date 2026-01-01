@@ -25,7 +25,7 @@ public class Plugin {
     public Plugin(PluginManifest manifest, List<Path> artifactPaths) {
         if (log.isDebugEnabled()) {
             var artifactPathsString = artifactPaths.stream().map(it -> it.getFileName().toString()).toList();
-            log.debug("Creating plugin {} with artifacts: {}", manifest.id(), artifactPaths);
+            log.debug("Creating plugin {} with artifacts: {}", manifest.id(), artifactPathsString);
         }
         this.manifest = manifest;
         this.moduleFinder = ModuleFinder.of(artifactPaths.toArray(Path[]::new));

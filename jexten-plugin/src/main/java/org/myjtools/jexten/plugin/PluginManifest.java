@@ -79,8 +79,41 @@ public class PluginManifest {
      */
     public void validate() {
         List<String> errors = new ArrayList<>();
+        validateRequiredFields(errors);
+        validateArtifactsStructure(errors);
+        validateExtensionsStructure(errors);
+        if (!errors.isEmpty()) {
+            throw new InvalidManifestException(errors);
+        }
+    }
 
-        // Required fields
+    private void validateExtensionsStructure(List<String> errors) {
+        if (extensions != null) {
+            for (var entry : extensions.entrySet()) {
+                if (isBlank(entry.getKey())) {
+                    errors.add("extension point key cannot be blank");
+                }
+                if (entry.getValue() == null || entry.getValue().isEmpty()) {
+                    errors.add("extension point '" + entry.getKey() + "' must have at least one implementation");
+                }
+            }
+        }
+    }
+
+    private void validateArtifactsStructure(List<String> errors) {
+        if (artifacts != null) {
+            for (var entry : artifacts.entrySet()) {
+                if (isBlank(entry.getKey())) {
+                    errors.add("artifact key cannot be blank");
+                }
+                if (entry.getValue() == null || entry.getValue().isEmpty()) {
+                    errors.add("artifact '" + entry.getKey() + "' must have at least one dependency");
+                }
+            }
+        }
+    }
+
+    private void validateRequiredFields(List<String> errors) {
         if (isBlank(group)) {
             errors.add("'group' is required");
         }
@@ -94,34 +127,6 @@ public class PluginManifest {
         }
         if (isBlank(hostModule)) {
             errors.add("'hostModule' is required");
-        }
-
-        // Validate artifacts map structure
-        if (artifacts != null) {
-            for (var entry : artifacts.entrySet()) {
-                if (isBlank(entry.getKey())) {
-                    errors.add("artifact key cannot be blank");
-                }
-                if (entry.getValue() == null || entry.getValue().isEmpty()) {
-                    errors.add("artifact '" + entry.getKey() + "' must have at least one dependency");
-                }
-            }
-        }
-
-        // Validate extensions map structure
-        if (extensions != null) {
-            for (var entry : extensions.entrySet()) {
-                if (isBlank(entry.getKey())) {
-                    errors.add("extension point key cannot be blank");
-                }
-                if (entry.getValue() == null || entry.getValue().isEmpty()) {
-                    errors.add("extension point '" + entry.getKey() + "' must have at least one implementation");
-                }
-            }
-        }
-
-        if (!errors.isEmpty()) {
-            throw new InvalidManifestException(errors);
         }
     }
 

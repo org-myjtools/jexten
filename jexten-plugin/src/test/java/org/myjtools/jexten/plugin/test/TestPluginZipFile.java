@@ -26,10 +26,10 @@ class TestPluginZipFile {
 
 
     @Test
-    void readMalformedPluginFile() throws IOException {
+    void readMalformedPluginFile() {
         assertThatCode( () -> {
             Path path = Path.of("src/test/resources/malformed-plugin.zip");
-            PluginBundleFile file = PluginBundleFile.read(path);
+            PluginBundleFile.read(path);
         }).hasMessage("Plugin manifest not present");
     }
 
