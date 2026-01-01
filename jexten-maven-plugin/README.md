@@ -1,0 +1,216 @@
+# JExten Maven Plugin
+
+Maven plugin for building JExten plugin packages.
+
+## Overview
+
+This plugin provides goals to generate plugin manifests and assemble plugin bundles during the Maven build lifecycle. It automates:
+
+- Generation of `plugin.yaml` manifest from project metadata
+- Detection of extensions and extension points from compiled classes
+- Assembly of plugin ZIP bundles with all dependencies
+
+## Installation
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.myjtools.jexten</groupId>
+            <artifactId>jexten-maven-plugin</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>generate-manifest</goal>
+                        <goal>assemble-bundle</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <hostModule>com.example.myplugin</hostModule>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+## Goals
+
+### `generate-manifest`
+
+Generates the `plugin.yaml` manifest file from project information.
+
+**Phase:** `prepare-package`
+
+#### Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `hostModule` | Yes | JPMS module name of the plugin |
+| `application` | No | Target application name |
+| `hostArtifact` | No | Override the main artifact coordinates |
+
+#### Generated Manifest
+
+The goal generates `plugin.yaml` in the output directory:
+
+```yaml
+group: com.example
+name: my-plugin
+version: 1.0.0
+hostModule: com.example.myplugin
+displayName: My Plugin
+description: Plugin description from POM
+url: https://example.com/my-plugin
+licenseName: Apache-2.0
+artifacts:
+  main:
+    - my-plugin-1.0.0.jar
+    - dependency-1.0.jar
+extensions:
+  com.example.api.ExtensionPoint:
+    - com.example.plugin.ExtensionImpl
+extensionPoints:
+  - com.example.plugin.api.MyExtensionPoint
+```
+
+### `assemble-bundle`
+
+Assembles a plugin bundle (ZIP file) containing the manifest and all artifacts.
+
+**Phase:** `package`
+
+#### Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `hostArtifact` | No | Override the main artifact to include |
+
+#### Generated Bundle
+
+Creates `${artifactId}-${version}-plugin.zip` in the target directory:
+
+```
+my-plugin-1.0.0-plugin.zip
+├── plugin.yaml
+├── my-plugin-1.0.0.jar
+├── dependency-1.0.jar
+└── transitive-dep-2.0.jar
+```
+
+## Complete Configuration Example
+
+```xml
+<project>
+    <groupId>com.example</groupId>
+    <artifactId>my-plugin</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>My Plugin</name>
+    <description>A plugin for the example application</description>
+    <url>https://example.com/my-plugin</url>
+
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+        </license>
+    </licenses>
+
+    <dependencies>
+        <!-- Plugin API (provided by host application) -->
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>app-api</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Plugin dependencies (bundled) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.myjtools.jexten</groupId>
+                <artifactId>jexten-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-manifest</goal>
+                            <goal>assemble-bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <hostModule>com.example.myplugin</hostModule>
+                    <application>ExampleApp</application>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+## Build Commands
+
+```bash
+# Generate manifest only
+mvn jexten:generate-manifest
+
+# Generate manifest and assemble bundle
+mvn package
+
+# Skip manifest generation
+mvn package -Djexten.skip=true
+```
+
+## Dependency Handling
+
+The plugin handles dependencies as follows:
+
+| Scope | Included in Bundle |
+|-------|-------------------|
+| `compile` | Yes |
+| `runtime` | Yes |
+| `provided` | No (expected from host) |
+| `test` | No |
+| `system` | No |
+
+## Extension Detection
+
+The plugin automatically detects:
+
+- **Extensions**: Classes in `META-INF/extensions` (generated by jexten-processor)
+- **Extension Points**: Interfaces in `META-INF/extension-points`
+
+Ensure `jexten-processor` is in your dependencies for automatic detection.
+
+## Troubleshooting
+
+### "hostModule is required"
+
+Add the `<hostModule>` configuration parameter with your JPMS module name.
+
+### "Packaging must be 'jar'"
+
+The plugin only works with JAR projects. Change your packaging to `jar`.
+
+### Extensions not detected
+
+Ensure `jexten-processor` is in your dependencies and annotation processing is enabled.
+
+## Documentation
+
+For complete documentation, see the [main JExten README](../README.md).
+
+## License
+
+Apache License 2.0

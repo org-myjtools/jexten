@@ -1,23 +1,362 @@
-https://github.com/moditect/layrry/
+# JExten
 
+**JExten** is a lightweight, annotation-driven extension framework for Java that leverages the Java Platform Module System (JPMS) to create dynamic, plugin-based applications.
 
-# OSGi
+## Features
 
-> OSGi (Open Service Gateway Initiative) is a modular approach and specification that allows developers to create robust,
-> highly decoupled and dynamic applications in Java. There are various implementations of this specification. The open
-> source options include Apache Felix, Eclipse Equinox and Knopflerfish.
+- **JPMS-Native**: Built from the ground up on Java's Module System (Java 21+)
+- **Annotation-Driven**: Simple `@ExtensionPoint` and `@Extension` annotations
+- **Semantic Versioning**: Built-in version compatibility checking
+- **Dependency Injection**: Field-level injection with `@Inject` annotation
+- **Dynamic Loading**: Install/remove plugins at runtime without restart
+- **Priority System**: Deterministic extension resolution with priority levels
+- **Scoped Instances**: SINGLETON, LOCAL, and TRANSIENT lifecycle management
+- **Maven & Gradle Support**: First-class build tool integration
 
-OSGi is widely used in enterprise applications, embedded systems, and IoT devices. However, it has a steeper learning
-curve and requires a good understanding of the OSGi framework and its lifecycle management.
+## Quick Start
 
-[https://www.osgi.org](https://www.osgi.org)
+### 1. Add Dependencies
 
-# Layrry
+```xml
+<dependency>
+    <groupId>org.myjtools</groupId>
+    <artifactId>jexten-core</artifactId>
+    <version>1.0.0</version>
+</dependency>
 
-> Layrry is a launcher and Java API for executing modularized Java applications.
+<!-- For plugin management -->
+<dependency>
+    <groupId>org.myjtools</groupId>
+    <artifactId>jexten-plugin</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
 
- Usa el sistema de módulos de Java
-para cargar y ejecutar aplicaciones modulares. Sin embargo, no es un gestor de plugins per se, sino que se centra en
-la configuración y ejecución de aplicaciones.
+### 2. Define an Extension Point
 
-https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/ModuleLayer.html
+```java
+import org.myjtools.jexten.ExtensionPoint;
+
+@ExtensionPoint(version = "1.0")
+public interface Greeter {
+    void greet(String name);
+}
+```
+
+### 3. Implement an Extension
+
+```java
+import org.myjtools.jexten.Extension;
+import org.myjtools.jexten.Priority;
+import org.myjtools.jexten.Scope;
+
+@Extension
+public class FriendlyGreeter implements Greeter {
+    @Override
+    public void greet(String name) {
+        System.out.println("Hello, " + name + "!");
+    }
+}
+```
+
+### 4. Configure module-info.java
+
+```java
+module com.example.app {
+    requires org.myjtools.jexten;
+
+    exports com.example;
+
+    uses com.example.Greeter;
+    provides com.example.Greeter with com.example.FriendlyGreeter;
+}
+```
+
+### 5. Discover and Use Extensions
+
+```java
+import org.myjtools.jexten.ExtensionManager;
+
+public class Main {
+    public static void main(String[] args) {
+        ExtensionManager manager = ExtensionManager.create();
+
+        // Get highest priority extension
+        manager.getExtension(Greeter.class)
+            .ifPresent(greeter -> greeter.greet("World"));
+
+        // Get all extensions
+        manager.getExtensions(Greeter.class)
+            .forEach(greeter -> greeter.greet("Everyone"));
+    }
+}
+```
+
+## Plugin Management
+
+JExten supports dynamic plugin loading via `PluginManager`:
+
+```java
+import org.myjtools.jexten.plugin.PluginManager;
+import org.myjtools.jexten.ExtensionManager;
+
+public class Application {
+    public static void main(String[] args) throws IOException {
+        Path pluginDir = Path.of("plugins");
+
+        // Create plugin manager
+        PluginManager pluginManager = new PluginManager(
+            "com.example.app",           // Application ID
+            Application.class.getClassLoader(),
+            pluginDir
+        );
+
+        // Install plugin from bundle
+        pluginManager.installPluginFromBundle(
+            pluginDir.resolve("my-plugin-1.0.0.zip")
+        );
+
+        // Create extension manager with plugin support
+        ExtensionManager extensionManager = ExtensionManager.create(pluginManager);
+
+        // Discover extensions from plugins
+        extensionManager.getExtensions(Greeter.class)
+            .forEach(g -> g.greet("Plugin User"));
+
+        // Remove plugin at runtime
+        pluginManager.removePlugin(new PluginID("com.example", "my-plugin"));
+    }
+}
+```
+
+## Dependency Injection
+
+JExten provides built-in dependency injection:
+
+```java
+@Extension(extensionPoint = "com.example.Service")
+public class MyService implements Service {
+
+    @Inject
+    private Repository repository;  // Inject another extension
+
+    @Inject(value = "special")
+    private Logger logger;          // Named injection
+
+    @Inject
+    private List<Plugin> plugins;   // Inject all implementations
+
+    @PostConstruct
+    void initialize() {
+        // Called after all injections complete
+    }
+}
+```
+
+## Plugin Manifest
+
+Plugins are defined with a `plugin.yaml` manifest:
+
+```yaml
+application: com.example.app
+group: com.example
+name: my-plugin
+version: '1.0'
+displayName: My Plugin
+description: A sample plugin for the application
+
+artifacts:
+  com.example:
+    - my-plugin-1.0.0
+    - dependency-lib-2.3.1
+
+extensions:
+  com.example.Greeter:
+    - com.example.plugin.CustomGreeter
+
+extensionPoints:
+  - com.example.plugin.NewExtensionPoint
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Host Application                       │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │              ExtensionManager                           ││
+│  │   ┌─────────────┐  ┌─────────────┐  ┌───────────┐       ││
+│  │   │ServiceLoader│  │InjectionHdlr│  │   Cache   │       ││
+│  │   └─────────────┘  └─────────────┘  └───────────┘       ││
+│  └─────────────────────────────────────────────────────────┘│
+│                            │                                │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │              PluginManager                              ││
+│  │   ┌─────────────┐  ┌─────────────┐  ┌───────────┐       ││
+│  │   │ ModuleLayer │  │  Manifest   │  │ Artifacts │       ││
+│  │   │    Tree     │  │   Parser    │  │   Store   │       ││
+│  │   └─────────────┘  └─────────────┘  └───────────┘       ││
+│  └─────────────────────────────────────────────────────────┘│
+│                            │                                │
+├────────────────────────────┼────────────────────────────────┤
+│          Boot Layer        │         Plugin Layers          │
+│  ┌───────────────────┐     │    ┌───────────────────┐       │
+│  │   Host Module     │     │    │    Plugin A       │       │
+│  │  @ExtensionPoint  │◄────┼────│   @Extension      │       │
+│  └───────────────────┘     │    └───────────────────┘       │
+│                            │    ┌───────────────────┐       │
+│                            │    │    Plugin B       │       │
+│                            │    │   @Extension      │       │
+│                            │    └───────────────────┘       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Comparison with Other Frameworks
+
+### JExten vs OSGi vs Layrry
+
+| Feature | JExten | OSGi | Layrry |
+|---------|--------|------|--------|
+| **Foundation** | JPMS (Java 21+) | Custom classloaders | JPMS |
+| **Configuration** | Annotations + YAML | Manifest headers | YAML/TOML/API |
+| **Learning Curve** | Low | High | Medium |
+| **Runtime Weight** | Lightweight | Heavy | Lightweight |
+| **Versioning** | Semantic (built-in) | Full version ranges | Maven coordinates |
+| **Dynamic Loading** | Yes | Yes | Yes |
+| **Dependency Injection** | Built-in | Declarative Services | No |
+| **Service Model** | ServiceLoader + Extensions | OSGi Services | ServiceLoader |
+| **Build Integration** | Maven/Gradle plugins | BND tools | Maven/Gradle |
+| **Maturity** | New | 20+ years | 2020+ |
+
+### When to Choose JExten
+
+**Choose JExten when you need:**
+- A modern, JPMS-native solution for Java 21+
+- Simple annotation-based configuration
+- Built-in dependency injection without external frameworks
+- Semantic versioning with automatic compatibility checks
+- Priority-based extension resolution
+- Low learning curve and minimal boilerplate
+
+**Choose OSGi when you need:**
+- Battle-tested solution with 20+ years of production use
+- Complex version range dependencies
+- Advanced service dynamics (service ranking, filters)
+- Compatibility with older Java versions
+- Enterprise-grade tooling (Eclipse PDE, BND)
+
+**Choose Layrry when you need:**
+- Configuration-first approach (YAML/TOML)
+- JBang integration for quick prototyping
+- Multiple versions of the same module simultaneously
+- File-watching for automatic plugin detection
+- Minimal API footprint
+
+### Detailed Comparison
+
+#### OSGi
+
+[OSGi](https://www.osgi.org/) is the veteran of Java modularity, predating JPMS by nearly two decades. It provides comprehensive modularity features including per-bundle classloaders, dynamic services, and sophisticated version ranges.
+
+**Advantages over JExten:**
+- Mature ecosystem with extensive tooling
+- Fine-grained package-level exports
+- Complex dependency resolution (version ranges, optional imports)
+- Works on any Java version
+
+**Disadvantages vs JExten:**
+- Steep learning curve
+- Heavy runtime footprint
+- Requires OSGi container
+- Complex manifest configuration
+- Not integrated with JPMS
+
+#### Layrry
+
+[Layrry](https://github.com/moditect/layrry) is a modern launcher for layered Java applications, created by Gunnar Morling. It provides YAML/TOML-based configuration for module layer hierarchies.
+
+**Advantages over JExten:**
+- Configuration-only approach (no annotations required)
+- Built-in file watching for plugins directory
+- JBang integration
+- TOML support
+
+**Disadvantages vs JExten:**
+- No built-in dependency injection
+- No semantic versioning validation
+- No priority system for extensions
+- Less opinionated (more configuration needed)
+- No annotation processor for compile-time validation
+
+### Migration Paths
+
+#### From OSGi to JExten
+
+1. Replace `@Component` with `@Extension`
+2. Replace OSGi service interfaces with `@ExtensionPoint`
+3. Convert `MANIFEST.MF` headers to `module-info.java`
+4. Replace `@Reference` with `@Inject`
+5. Update build from BND to standard Maven/Gradle
+
+#### From Layrry to JExten
+
+1. Add `@ExtensionPoint` annotations to service interfaces
+2. Add `@Extension` annotations to implementations
+3. Convert layers.yaml to plugin.yaml manifests
+4. Use `PluginManager` instead of Layrry launcher
+
+## Modules
+
+| Module | Description |
+|--------|-------------|
+| `jexten-core` | Core annotations and ExtensionManager API |
+| `jexten-plugin` | Plugin management and dynamic loading |
+| `jexten-processor` | Compile-time annotation processor |
+| `jexten-maven-plugin` | Maven plugin for bundling plugins |
+| `jexten-maven-artifact-store` | Maven repository integration |
+| `jexten-gradle-plugin` | Gradle plugin support (experimental) |
+
+## Building from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/myjtools/jexten.git
+cd jexten
+
+# Build with Maven
+mvn clean install
+
+# Run tests
+mvn test
+```
+
+## Requirements
+
+- Java 21 or higher
+- Maven 3.9+ or Gradle 8+
+
+## Examples
+
+See the `examples/` directory for complete working examples:
+
+- `jexten-example-app` - Host application demonstrating plugin loading
+- `jexten-example-plugin-a` - Basic plugin implementation
+- `jexten-example-plugin-b` - Plugin with custom extension points
+- `jexten-example-plugin-c` - Plugin with dependencies on other plugins
+- `jexten-example-plugin-d` - Gradle-based plugin
+
+## License
+
+[MIT License](LICENSE)
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+
+## Resources
+
+- [OSGi Alliance](https://www.osgi.org/)
+- [Layrry - GitHub](https://github.com/moditect/layrry)
+- [Plug-in Architectures With Layrry](https://www.morling.dev/blog/plugin-architectures-with-layrry-and-the-java-module-system/)
+- [Java 9, OSGi and the Future of Modularity](https://www.infoq.com/articles/java9-osgi-future-modularity/)
+- [JPMS Documentation](https://openjdk.org/projects/jigsaw/)
