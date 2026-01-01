@@ -80,8 +80,10 @@ public class BundleMojo extends AbstractMojo {
             addZipEntry(jar.toPath(), zipOut);
             Set<FetchedArtifact> fetchedArtifacts = new HashSet<>();
             collectFetchedArtifacts(fetchResult.artifacts(), fetchedArtifacts);
-            fetchedArtifacts.forEach(fetchedArtifact -> addZipEntry(fetchedArtifact.path(), zipOut));
-        } catch (Exception e) {
+            for (FetchedArtifact fetchedArtifact : fetchedArtifacts) {
+                addZipEntry(fetchedArtifact.path(), zipOut);
+            }
+        } catch (IOException e) {
             throw new MojoExecutionException("Error creating bundle file: " + bundleFile.getAbsolutePath(), e);
         }
 
@@ -94,28 +96,24 @@ public class BundleMojo extends AbstractMojo {
             }
             fetchedArtifacts.add(fetchedArtifact);
             collectFetchedArtifacts(fetchedArtifact.dependencies(), fetchedArtifacts);
-        };
+        }
     }
 
-    private void addZipEntry(Path path, ZipOutputStream zipOut) {
-        try {
-            if (Files.notExists(path)) {
-                throw new FileNotFoundException("File not found: " + path.toAbsolutePath());
+    private void addZipEntry(Path path, ZipOutputStream zipOut) throws IOException {
+        if (Files.notExists(path)) {
+            throw new FileNotFoundException("File not found: " + path.toAbsolutePath());
+        }
+        getLog().info("Adding file to bundle: " + path.toAbsolutePath());
+        File file = path.toFile();
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            ZipEntry zipEntry = new ZipEntry(file.getName());
+            zipOut.putNextEntry(zipEntry);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fileInputStream.read(buffer)) > 0) {
+                zipOut.write(buffer, 0, length);
             }
-            getLog().info("Adding file to bundle: " + path.toAbsolutePath());
-            File file = path.toFile();
-            try (FileInputStream fis = new FileInputStream(file)) {
-                ZipEntry zipEntry = new ZipEntry(file.getName());
-                zipOut.putNextEntry(zipEntry);
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = fis.read(buffer)) > 0) {
-                    zipOut.write(buffer, 0, len);
-                }
-                zipOut.closeEntry();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            zipOut.closeEntry();
         }
     }
 
