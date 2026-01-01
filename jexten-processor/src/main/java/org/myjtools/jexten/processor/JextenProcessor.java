@@ -23,10 +23,6 @@ public class JextenProcessor extends AbstractProcessor {
 
     public static final String MODULE = "org.myjtools.jexten";
 
-    static {
-        System.out.println("Jexten Processor");
-    }
-
 
     private record ExtensionInfo(
         TypeElement extensionElement,
@@ -39,6 +35,14 @@ public class JextenProcessor extends AbstractProcessor {
     private ProcessorHelper helper;
     private Errors errors;
 
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
+        processingEnv.getMessager().printMessage(Kind.NOTE, "[jexten] :: JExten Processor initialized");
+    }
+
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
@@ -48,6 +52,7 @@ public class JextenProcessor extends AbstractProcessor {
 
         this.helper = new ProcessorHelper(processingEnv, roundEnv);
         this.errors = new Errors();
+
         helper.log(Kind.NOTE, "Processing annotations {}", annotations);
 
         if (!validateModuleInfoExists()) {
@@ -478,9 +483,9 @@ public class JextenProcessor extends AbstractProcessor {
 
     private void showErrors() {
         if (errors.hasMessages()) {
-            errors.messages().forEach((element,messages)->{
-                messages.forEach(it -> helper.log(Kind.ERROR, element,it));
-            });
+            errors.messages().forEach((element,messages)->
+                messages.forEach(it -> helper.log(Kind.ERROR, element,it))
+            );
         }
         if (errors.hasFixes()) {
             String fixes = errors.fixes().collect(joining("\n\t","\n\t",""));
