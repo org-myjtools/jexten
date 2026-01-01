@@ -181,9 +181,10 @@ public class TestPluginHotReload {
             PluginID id2 = new PluginID("com.example", "plugin");
             PluginID id3 = new PluginID("com.other", "plugin");
 
-            assertThat(id1).isEqualTo(id2);
-            assertThat(id1).isNotEqualTo(id3);
-            assertThat(id1.hashCode()).isEqualTo(id2.hashCode());
+            assertThat(id1)
+                .isEqualTo(id2)
+                .isNotEqualTo(id3)
+                .hasSameHashCodeAs(id2);
         }
     }
 }

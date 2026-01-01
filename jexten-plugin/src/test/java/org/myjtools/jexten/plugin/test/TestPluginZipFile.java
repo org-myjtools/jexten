@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-public class TestPluginZipFile {
+class TestPluginZipFile {
 
     @TempDir
     Path tempDir;

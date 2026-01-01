@@ -1,19 +1,19 @@
 package org.myjtools.jexten.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.LocalRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,21 +70,17 @@ class BundleMojoTest {
 
         @Test
         @DisplayName("should skip execution for non-jar packaging")
-        void shouldSkipForNonJarPackaging() throws Exception {
+        void shouldSkipForNonJarPackaging() {
             when(project.getPackaging()).thenReturn("pom");
-
-            // Should not throw - just skips
-            mojo.execute();
+            Assertions.assertDoesNotThrow(() -> mojo.execute());
         }
 
 
         @Test
         @DisplayName("should skip execution for war packaging")
-        void shouldSkipForWarPackaging() throws Exception {
+        void shouldSkipForWarPackaging() {
             when(project.getPackaging()).thenReturn("war");
-
-            // Should not throw - just skips
-            mojo.execute();
+            Assertions.assertDoesNotThrow(() -> mojo.execute());
         }
 
 
@@ -111,32 +107,27 @@ class BundleMojoTest {
         }
 
 
+
         @Test
         @DisplayName("should fail when hostArtifact is null")
         void shouldFailWhenHostArtifactIsNull() throws Exception {
-            setField(mojo, "hostArtifact", null);
-
-            assertThatThrownBy(() -> mojo.execute())
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("Host artifact must be specified");
+            testHostArtifactValidation(null);
         }
-
 
         @Test
         @DisplayName("should fail when hostArtifact is blank")
         void shouldFailWhenHostArtifactIsBlank() throws Exception {
-            setField(mojo, "hostArtifact", "   ");
-
-            assertThatThrownBy(() -> mojo.execute())
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("Host artifact must be specified");
+            testHostArtifactValidation("   ");
         }
-
 
         @Test
         @DisplayName("should fail when hostArtifact is empty")
         void shouldFailWhenHostArtifactIsEmpty() throws Exception {
-            setField(mojo, "hostArtifact", "");
+            testHostArtifactValidation("");
+        }
+
+        private void testHostArtifactValidation(String hostArtifact) throws Exception {
+            setField(mojo, "hostArtifact", hostArtifact);
 
             assertThatThrownBy(() -> mojo.execute())
                 .isInstanceOf(MojoExecutionException.class)
@@ -342,19 +333,13 @@ class BundleMojoTest {
             Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
 
-            // Execute will try to fetch dependencies through maven-fetcher
-            // The test verifies compile deps are processed
-            try {
-                mojo.execute();
-            } catch (MojoExecutionException e) {
-                // Expected - maven-fetcher can't actually fetch
-            }
+            Assertions.assertDoesNotThrow(() -> mojo.execute());
         }
 
 
         @Test
         @DisplayName("should include runtime scope dependencies")
-        void shouldIncludeRuntimeDependencies() throws Exception {
+        void shouldIncludeRuntimeDependencies() throws IOException {
             org.apache.maven.model.Dependency dep = new org.apache.maven.model.Dependency();
             dep.setGroupId("org.slf4j");
             dep.setArtifactId("slf4j-simple");
@@ -368,11 +353,8 @@ class BundleMojoTest {
             Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
 
-            try {
-                mojo.execute();
-            } catch (MojoExecutionException e) {
-                // Expected
-            }
+            Assertions.assertDoesNotThrow(() -> mojo.execute());
+
         }
 
 

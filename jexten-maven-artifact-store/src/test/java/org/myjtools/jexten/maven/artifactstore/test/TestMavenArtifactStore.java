@@ -26,12 +26,12 @@ class TestMavenArtifactStore {
         assertThat(result).hasEntrySatisfying(
             "commons-io:commons-io",
             paths -> assertThat(paths).hasSize(1)
-                    .anySatisfy(path -> assertThat(path.getFileName().toString()).isEqualTo("commons-io-2.16.1.jar"))
+                    .anySatisfy(path -> assertThat(path.getFileName()).hasToString("commons-io-2.16.1.jar"))
         );
         assertThat(result).hasEntrySatisfying(
             "org.slf4j:slf4j-api",
             paths -> assertThat(paths).hasSize(1)
-                    .anySatisfy(path -> assertThat(path.getFileName().toString()).isEqualTo("slf4j-api-2.0.6.jar"))
+                    .anySatisfy(path -> assertThat(path.getFileName()).hasToString("slf4j-api-2.0.6.jar"))
         );
     }
 

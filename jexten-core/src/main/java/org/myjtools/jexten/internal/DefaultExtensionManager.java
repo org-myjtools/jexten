@@ -186,8 +186,8 @@ public class DefaultExtensionManager implements ExtensionManager {
 		try {
 			//
 			// Since the mechanism to detect implementations relies on the Java ServiceLoader,
-			// we can't inject dependencies via constructors;
-			// any attempt to declare a service implementation with no default constructor
+			// we can't inject dependencies via constructors.
+			// Any attempt to declare a service implementation with no default constructor
 			// will produce the following compiler error:
 			// java: the service implementation does not have a default constructor
 			//

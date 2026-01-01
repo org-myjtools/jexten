@@ -12,13 +12,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-public class TestPluginManager {
+class TestPluginManager {
 
     @TempDir
     Path tempDir;
 
     @Test
-    public void installPluginFromBundleFile() {
+    void installPluginFromBundleFile() {
         PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
         pluginManager.installPluginFromBundle(Path.of("src/test/resources/plugin.zip"));
         assertThat(tempDir.resolve("artifacts/assertj/assertj-core/3.27.1/assertj-core-3.27.1.jar")).exists();
@@ -28,7 +28,7 @@ public class TestPluginManager {
 
 
     @Test
-    public void removePlugin() {
+    void removePlugin() {
         PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
         pluginManager.installPluginFromBundle(Path.of("src/test/resources/plugin.zip"));
         var pluginID = new PluginID("Plugin-Group", "Plugin-Name");
@@ -38,7 +38,7 @@ public class TestPluginManager {
     }
 
     @Test
-    public void installPluginFromJar() {
+    void installPluginFromJar() {
         PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
         pluginManager.setArtifactStore(request-> Map.of(
             "assertj", List.of(Path.of("src/test/resources/mock_repo/assertj-core-3.27.1.jar")),

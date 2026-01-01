@@ -12,7 +12,7 @@ import java.io.StringWriter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class TestPluginManifest {
+class TestPluginManifest {
 
 
     @Test

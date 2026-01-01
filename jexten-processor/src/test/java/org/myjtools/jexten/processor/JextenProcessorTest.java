@@ -30,19 +30,19 @@ class JextenProcessorTest {
 
     private Compilation compile(JavaFileObject... sources) {
         return javac()
-            .withProcessors(new JextenProcessor())
-            .withClasspath(List.of(
-                new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0/jexten-core-1.0.0.jar")
-            ))
-            .compile(sources);
+                .withProcessors(new JextenProcessor())
+                .withClasspath(List.of(
+                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0/jexten-core-1.0.0.jar")
+                ))
+                .compile(sources);
     }
 
     private Compilation compileWithoutProcessor(JavaFileObject... sources) {
         return javac()
-            .withClasspath(List.of(
-                new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0/jexten-core-1.0.0.jar")
-            ))
-            .compile(sources);
+                .withClasspath(List.of(
+                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0/jexten-core-1.0.0.jar")
+                ))
+                .compile(sources);
     }
 
 
@@ -54,16 +54,16 @@ class JextenProcessorTest {
         @DisplayName("should require module-info.java for @ExtensionPoint")
         void shouldRequireModuleInfoForExtensionPoint() {
             JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface MyExtensionPoint {
-                }
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface MyExtensionPoint {
+                            }
+                            """
             );
 
             Compilation compilation = compile(source);
@@ -76,29 +76,29 @@ class JextenProcessorTest {
         @DisplayName("should require module-info.java for @Extension")
         void shouldRequireModuleInfoForExtension() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface MyExtensionPoint {
-                }
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface MyExtensionPoint {
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.MyExtension",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-
-                @Extension
-                public class MyExtension implements MyExtensionPoint {
-                }
-                """
+                    "test.MyExtension",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            
+                            @Extension
+                            public class MyExtension implements MyExtensionPoint {
+                            }
+                            """
             );
 
             Compilation compilation = compile(extensionPoint, extension);
@@ -111,16 +111,16 @@ class JextenProcessorTest {
         @DisplayName("should compile without processor when no module-info")
         void shouldCompileWithoutProcessor() {
             JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface MyExtensionPoint {
-                }
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface MyExtensionPoint {
+                            }
+                            """
             );
 
             Compilation compilation = compileWithoutProcessor(source);
@@ -139,16 +139,16 @@ class JextenProcessorTest {
         void shouldDetectExtensionPointOnClass() {
             // The processor validates type before checking module
             JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyClass",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public class MyClass {
-                }
-                """
+                    "test.MyClass",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public class MyClass {
+                            }
+                            """
             );
 
             Compilation compilation = compile(source);
@@ -162,29 +162,29 @@ class JextenProcessorTest {
         @DisplayName("should detect @Extension on interface even without module-info")
         void shouldDetectExtensionOnInterface() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface MyExtensionPoint {
-                }
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface MyExtensionPoint {
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.MyExtension",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-
-                @Extension
-                public interface MyExtension extends MyExtensionPoint {
-                }
-                """
+                    "test.MyExtension",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            
+                            @Extension
+                            public interface MyExtension extends MyExtensionPoint {
+                            }
+                            """
             );
 
             Compilation compilation = compile(extensionPoint, extension);
@@ -203,17 +203,17 @@ class JextenProcessorTest {
         @DisplayName("should parse @ExtensionPoint with valid version")
         void shouldParseExtensionPointWithValidVersion() {
             JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface MyExtensionPoint {
-                    void execute();
-                }
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface MyExtensionPoint {
+                                void execute();
+                            }
+                            """
             );
 
             // Without processor, compilation should succeed
@@ -227,40 +227,40 @@ class JextenProcessorTest {
         @DisplayName("should parse @Extension with all attributes")
         void shouldParseExtensionWithAllAttributes() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.Service",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "2.0")
-                public interface Service {
-                    void execute();
-                }
-                """
+                    "test.Service",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "2.0")
+                            public interface Service {
+                                void execute();
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.ServiceImpl",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Priority;
-                import org.myjtools.jexten.Scope;
-
-                @Extension(
-                    extensionPoint = "test.Service",
-                    extensionPointVersion = "2.0",
-                    priority = Priority.HIGHEST,
-                    scope = Scope.SINGLETON,
-                    name = "primary-service"
-                )
-                public class ServiceImpl implements Service {
-                    @Override
-                    public void execute() {}
-                }
-                """
+                    "test.ServiceImpl",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            import org.myjtools.jexten.Priority;
+                            import org.myjtools.jexten.Scope;
+                            
+                            @Extension(
+                                extensionPoint = "test.Service",
+                                extensionPointVersion = "2.0",
+                                priority = Priority.HIGHEST,
+                                scope = Scope.SINGLETON,
+                                name = "primary-service"
+                            )
+                            public class ServiceImpl implements Service {
+                                @Override
+                                public void execute() {}
+                            }
+                            """
             );
 
             // Without processor, compilation should succeed
@@ -274,32 +274,32 @@ class JextenProcessorTest {
         @DisplayName("should parse @Extension inferring extension point")
         void shouldParseExtensionInferringExtensionPoint() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface MyExtensionPoint {
-                    void execute();
-                }
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface MyExtensionPoint {
+                                void execute();
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.MyExtension",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-
-                @Extension
-                public class MyExtension implements MyExtensionPoint {
-                    @Override
-                    public void execute() {}
-                }
-                """
+                    "test.MyExtension",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            
+                            @Extension
+                            public class MyExtension implements MyExtensionPoint {
+                                @Override
+                                public void execute() {}
+                            }
+                            """
             );
 
             // Without processor, compilation should succeed
@@ -318,43 +318,43 @@ class JextenProcessorTest {
         @DisplayName("should compile extension extending abstract class")
         void shouldCompileExtensionExtendingAbstractClass() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.Service",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {
-                    void execute();
-                }
-                """
+                    "test.Service",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface Service {
+                                void execute();
+                            }
+                            """
             );
 
             JavaFileObject abstractClass = JavaFileObjects.forSourceString(
-                "test.AbstractService",
-                """
-                package test;
-
-                public abstract class AbstractService implements Service {
-                    protected void helper() {}
-                }
-                """
+                    "test.AbstractService",
+                    """
+                            package test;
+                            
+                            public abstract class AbstractService implements Service {
+                                protected void helper() {}
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.ConcreteService",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-
-                @Extension(extensionPoint = "test.Service")
-                public class ConcreteService extends AbstractService {
-                    @Override
-                    public void execute() {}
-                }
-                """
+                    "test.ConcreteService",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            
+                            @Extension(extensionPoint = "test.Service")
+                            public class ConcreteService extends AbstractService {
+                                @Override
+                                public void execute() {}
+                            }
+                            """
             );
 
             Compilation compilation = compileWithoutProcessor(extensionPoint, abstractClass, extension);
@@ -367,35 +367,35 @@ class JextenProcessorTest {
         @DisplayName("should compile generic extension point implementation")
         void shouldCompileGenericExtensionPointImplementation() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.Repository",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Repository<T> {
-                    T findById(String id);
-                    void save(T entity);
-                }
-                """
+                    "test.Repository",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface Repository<T> {
+                                T findById(String id);
+                                void save(T entity);
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.UserRepository",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-
-                @Extension(extensionPoint = "test.Repository")
-                public class UserRepository implements Repository<String> {
-                    @Override
-                    public String findById(String id) { return id; }
-                    @Override
-                    public void save(String entity) {}
-                }
-                """
+                    "test.UserRepository",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            
+                            @Extension(extensionPoint = "test.Repository")
+                            public class UserRepository implements Repository<String> {
+                                @Override
+                                public String findById(String id) { return id; }
+                                @Override
+                                public void save(String entity) {}
+                            }
+                            """
             );
 
             Compilation compilation = compileWithoutProcessor(extensionPoint, extension);
@@ -408,53 +408,53 @@ class JextenProcessorTest {
         @DisplayName("should compile multiple extensions for same extension point")
         void shouldCompileMultipleExtensions() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.Greeter",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Greeter {
-                    String greet(String name);
-                }
-                """
+                    "test.Greeter",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface Greeter {
+                                String greet(String name);
+                            }
+                            """
             );
 
             JavaFileObject extension1 = JavaFileObjects.forSourceString(
-                "test.FriendlyGreeter",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Priority;
-
-                @Extension(priority = Priority.NORMAL)
-                public class FriendlyGreeter implements Greeter {
-                    @Override
-                    public String greet(String name) {
-                        return "Hello, " + name + "!";
-                    }
-                }
-                """
+                    "test.FriendlyGreeter",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            import org.myjtools.jexten.Priority;
+                            
+                            @Extension(priority = Priority.NORMAL)
+                            public class FriendlyGreeter implements Greeter {
+                                @Override
+                                public String greet(String name) {
+                                    return "Hello, " + name + "!";
+                                }
+                            }
+                            """
             );
 
             JavaFileObject extension2 = JavaFileObjects.forSourceString(
-                "test.FormalGreeter",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Priority;
-
-                @Extension(priority = Priority.HIGHER)
-                public class FormalGreeter implements Greeter {
-                    @Override
-                    public String greet(String name) {
-                        return "Good day, " + name + ".";
-                    }
-                }
-                """
+                    "test.FormalGreeter",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.Extension;
+                            import org.myjtools.jexten.Priority;
+                            
+                            @Extension(priority = Priority.HIGHER)
+                            public class FormalGreeter implements Greeter {
+                                @Override
+                                public String greet(String name) {
+                                    return "Good day, " + name + ".";
+                                }
+                            }
+                            """
             );
 
             Compilation compilation = compileWithoutProcessor(extensionPoint, extension1, extension2);
@@ -467,33 +467,33 @@ class JextenProcessorTest {
         @DisplayName("should compile extension in different package")
         void shouldCompileExtensionInDifferentPackage() {
             JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.api.Service",
-                """
-                package test.api;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {
-                    void execute();
-                }
-                """
+                    "test.api.Service",
+                    """
+                            package test.api;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "1.0")
+                            public interface Service {
+                                void execute();
+                            }
+                            """
             );
 
             JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.impl.ServiceImpl",
-                """
-                package test.impl;
-
-                import org.myjtools.jexten.Extension;
-                import test.api.Service;
-
-                @Extension(extensionPoint = "test.api.Service")
-                public class ServiceImpl implements Service {
-                    @Override
-                    public void execute() {}
-                }
-                """
+                    "test.impl.ServiceImpl",
+                    """
+                            package test.impl;
+                            
+                            import org.myjtools.jexten.Extension;
+                            import test.api.Service;
+                            
+                            @Extension(extensionPoint = "test.api.Service")
+                            public class ServiceImpl implements Service {
+                                @Override
+                                public void execute() {}
+                            }
+                            """
             );
 
             Compilation compilation = compileWithoutProcessor(extensionPoint, extension);
@@ -508,292 +508,234 @@ class JextenProcessorTest {
     class VersionFormatValidation {
 
         @Test
-        @DisplayName("should accept major.minor version format")
-        void shouldAcceptMajorMinorVersion() {
+        @DisplayName("should accept valid version formats")
+        void shouldAcceptValidVersionFormats() {
+            assertValidVersion("2.3");       // major.minor
+            assertValidVersion("1.2.3");    // major.minor.patch
+            assertValidVersion("0.1.0");    // version with zero
+            assertValidVersion("100.200.300"); // large version numbers
+        }
+
+        private void assertValidVersion(String version) {
             JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "2.3")
-                public interface MyExtensionPoint {}
-                """
+                    "test.MyExtensionPoint",
+                    """
+                            package test;
+                            
+                            import org.myjtools.jexten.ExtensionPoint;
+                            
+                            @ExtensionPoint(version = "%s")
+                            public interface MyExtensionPoint {}
+                            """.formatted(version)
             );
 
             Compilation compilation = compileWithoutProcessor(source);
-
             assertThat(compilation).succeeded();
         }
 
 
-        @Test
-        @DisplayName("should accept major.minor.patch version format")
-        void shouldAcceptMajorMinorPatchVersion() {
-            JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.2.3")
-                public interface MyExtensionPoint {}
-                """
-            );
-
-            Compilation compilation = compileWithoutProcessor(source);
-
-            assertThat(compilation).succeeded();
-        }
-
-
-        @Test
-        @DisplayName("should accept version with zero")
-        void shouldAcceptVersionWithZero() {
-            JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "0.1.0")
-                public interface MyExtensionPoint {}
-                """
-            );
-
-            Compilation compilation = compileWithoutProcessor(source);
-
-            assertThat(compilation).succeeded();
-        }
-
-
-        @Test
-        @DisplayName("should accept large version numbers")
-        void shouldAcceptLargeVersionNumbers() {
-            JavaFileObject source = JavaFileObjects.forSourceString(
-                "test.MyExtensionPoint",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "100.200.300")
-                public interface MyExtensionPoint {}
-                """
-            );
-
-            Compilation compilation = compileWithoutProcessor(source);
-
-            assertThat(compilation).succeeded();
-        }
-    }
-
-
-    void assertCompilation(
-            String extensionPointSource,
-            String extensionSource
-    ) {
-        JavaFileObject extensionPoint = JavaFileObjects.forSourceString("test.Service", extensionPointSource);
-        JavaFileObject extension = JavaFileObjects.forSourceString("test.ServiceImpl",extensionSource);
-        Compilation compilation = compileWithoutProcessor(extensionPoint, extension);
-        assertThat(compilation).succeeded();
-    }
-
-
-    @Nested
-    @DisplayName("Priority and Scope usage")
-    class PriorityAndScopeUsage {
-
-
-
-        @Test
-        @DisplayName("should compile extension with HIGHEST priority")
-        void shouldCompileWithHighestPriority() {
-            assertCompilation(
-                    """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {}
-                """,
-
-                    """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Priority;
-
-                @Extension(priority = Priority.HIGHEST)
-                public class ServiceImpl implements Service {}
-                """
-            );
-        }
-
-
-        @Test
-        @DisplayName("should compile extension with SINGLETON scope")
-        void shouldCompileWithSingletonScope() {
-            assertCompilation(
-                    """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {}
-                """,
-
-                    """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Scope;
-
-                @Extension(scope = Scope.SINGLETON)
-                public class ServiceImpl implements Service {}
-                """
-            );
-
-        }
-
-
-        @Test
-        @DisplayName("should compile extension with TRANSIENT scope")
-        void shouldCompileWithTransientScope() {
-            assertCompilation(
-                    """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {}
-                """,
-
-                    """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Scope;
-
-                @Extension(scope = Scope.TRANSIENT)
-                public class ServiceImpl implements Service {}
-                """
-            );
-        }
-
-
-        @Test
-        @DisplayName("should compile extension with LOCAL scope")
-        void shouldCompileWithLocalScope() {
-            assertCompilation(
-                    """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {}
-                """,
-
-                    """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-                import org.myjtools.jexten.Scope;
-
-                @Extension(scope = Scope.LOCAL)
-                public class ServiceImpl implements Service {}
-                """
-            );
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Named extensions")
-    class NamedExtensions {
-
-        @Test
-        @DisplayName("should compile extension with name attribute")
-        void shouldCompileExtensionWithName() {
-            JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.Service",
-                """
-                package test;
-
-                import org.myjtools.jexten.ExtensionPoint;
-
-                @ExtensionPoint(version = "1.0")
-                public interface Service {}
-                """
-            );
-
-            JavaFileObject extension = JavaFileObjects.forSourceString(
-                "test.ServiceImpl",
-                """
-                package test;
-
-                import org.myjtools.jexten.Extension;
-
-                @Extension(name = "my-custom-service")
-                public class ServiceImpl implements Service {}
-                """
-            );
-
+        void assertCompilation(
+                String extensionPointSource,
+                String extensionSource
+        ) {
+            JavaFileObject extensionPoint = JavaFileObjects.forSourceString("test.Service", extensionPointSource);
+            JavaFileObject extension = JavaFileObjects.forSourceString("test.ServiceImpl", extensionSource);
             Compilation compilation = compileWithoutProcessor(extensionPoint, extension);
-
             assertThat(compilation).succeeded();
         }
 
 
-        @Test
-        @DisplayName("should compile multiple named extensions")
-        void shouldCompileMultipleNamedExtensions() {
-            JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
-                "test.Service",
-                """
-                package test;
+        @Nested
+        @DisplayName("Priority and Scope usage")
+        class PriorityAndScopeUsage {
 
-                import org.myjtools.jexten.ExtensionPoint;
 
-                @ExtensionPoint(version = "1.0")
-                public interface Service {}
-                """
-            );
+            @Test
+            @DisplayName("should compile extension with HIGHEST priority")
+            void shouldCompileWithHighestPriority() {
+                assertCompilation(
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.ExtensionPoint;
+                                
+                                @ExtensionPoint(version = "1.0")
+                                public interface Service {}
+                                """,
 
-            JavaFileObject extension1 = JavaFileObjects.forSourceString(
-                "test.ServiceImplA",
-                """
-                package test;
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                import org.myjtools.jexten.Priority;
+                                
+                                @Extension(priority = Priority.HIGHEST)
+                                public class ServiceImpl implements Service {}
+                                """
+                );
+            }
 
-                import org.myjtools.jexten.Extension;
 
-                @Extension(name = "service-a")
-                public class ServiceImplA implements Service {}
-                """
-            );
+            @Test
+            @DisplayName("should compile extension with SINGLETON scope")
+            void shouldCompileWithSingletonScope() {
+                assertCompilation(
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.ExtensionPoint;
+                                
+                                @ExtensionPoint(version = "1.0")
+                                public interface Service {}
+                                """,
 
-            JavaFileObject extension2 = JavaFileObjects.forSourceString(
-                "test.ServiceImplB",
-                """
-                package test;
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                import org.myjtools.jexten.Scope;
+                                
+                                @Extension(scope = Scope.SINGLETON)
+                                public class ServiceImpl implements Service {}
+                                """
+                );
 
-                import org.myjtools.jexten.Extension;
+            }
 
-                @Extension(name = "service-b")
-                public class ServiceImplB implements Service {}
-                """
-            );
 
-            Compilation compilation = compileWithoutProcessor(extensionPoint, extension1, extension2);
+            @Test
+            @DisplayName("should compile extension with TRANSIENT scope")
+            void shouldCompileWithTransientScope() {
+                assertCompilation(
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.ExtensionPoint;
+                                
+                                @ExtensionPoint(version = "1.0")
+                                public interface Service {}
+                                """,
 
-            assertThat(compilation).succeeded();
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                import org.myjtools.jexten.Scope;
+                                
+                                @Extension(scope = Scope.TRANSIENT)
+                                public class ServiceImpl implements Service {}
+                                """
+                );
+            }
+
+
+            @Test
+            @DisplayName("should compile extension with LOCAL scope")
+            void shouldCompileWithLocalScope() {
+                assertCompilation(
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.ExtensionPoint;
+                                
+                                @ExtensionPoint(version = "1.0")
+                                public interface Service {}
+                                """,
+
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                import org.myjtools.jexten.Scope;
+                                
+                                @Extension(scope = Scope.LOCAL)
+                                public class ServiceImpl implements Service {}
+                                """
+                );
+            }
+        }
+
+
+        @Nested
+        @DisplayName("Named extensions")
+        class NamedExtensions {
+
+            @Test
+            @DisplayName("should compile extension with name attribute")
+            void shouldCompileExtensionWithName() {
+                JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
+                        "test.Service",
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.ExtensionPoint;
+                                
+                                @ExtensionPoint(version = "1.0")
+                                public interface Service {}
+                                """
+                );
+
+                JavaFileObject extension = JavaFileObjects.forSourceString(
+                        "test.ServiceImpl",
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                
+                                @Extension(name = "my-custom-service")
+                                public class ServiceImpl implements Service {}
+                                """
+                );
+
+                Compilation compilation = compileWithoutProcessor(extensionPoint, extension);
+
+                assertThat(compilation).succeeded();
+            }
+
+
+            @Test
+            @DisplayName("should compile multiple named extensions")
+            void shouldCompileMultipleNamedExtensions() {
+                JavaFileObject extensionPoint = JavaFileObjects.forSourceString(
+                        "test.Service",
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.ExtensionPoint;
+                                
+                                @ExtensionPoint(version = "1.0")
+                                public interface Service {}
+                                """
+                );
+
+                JavaFileObject extension1 = JavaFileObjects.forSourceString(
+                        "test.ServiceImplA",
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                
+                                @Extension(name = "service-a")
+                                public class ServiceImplA implements Service {}
+                                """
+                );
+
+                JavaFileObject extension2 = JavaFileObjects.forSourceString(
+                        "test.ServiceImplB",
+                        """
+                                package test;
+                                
+                                import org.myjtools.jexten.Extension;
+                                
+                                @Extension(name = "service-b")
+                                public class ServiceImplB implements Service {}
+                                """
+                );
+
+                Compilation compilation = compileWithoutProcessor(extensionPoint, extension1, extension2);
+
+                assertThat(compilation).succeeded();
+            }
         }
     }
 }
