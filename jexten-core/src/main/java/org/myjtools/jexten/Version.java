@@ -7,10 +7,9 @@ import java.util.stream.Stream;
  * Simplistic implementation of a version number that follows the Semantic Versioning
  * naming (<a href="https://semver.org/">...</a>).
  */
-public class Version implements Comparable<Version> {
+public record Version(int major, int minor, String patch) implements Comparable<Version> {
 
 
-    private static final WeakHashMap<String,Version> CACHE = new WeakHashMap<>();
 
     /**
      * Creates a new instance from a string representation
@@ -22,7 +21,17 @@ public class Version implements Comparable<Version> {
         if (version == null || version.isBlank()) {
            throw new IllegalArgumentException("Version string cannot be null or blank");
         }
-        return CACHE.computeIfAbsent(version, Version::new);
+        try {
+            var parts = Stream.of(version.split("\\.")).iterator();
+            int major = Integer.parseInt(parts.next());
+            int minor = parts.hasNext() ? Integer.parseInt(parts.next()) : 0;
+            String patch = parts.hasNext() ? parts.next() : "";
+            return new Version(major, minor, patch);
+        }  catch (NoSuchElementException | NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "Not valid version number %s : %s".formatted(version, e.getMessage())
+            );
+        }
     }
 
 
@@ -45,47 +54,9 @@ public class Version implements Comparable<Version> {
         .thenComparing(Version::patch);
 
 
-    private final int major;
-    private final int minor;
-    private final String patch;
 
 
-    private Version(String version) {
-        var parts = Stream.of(version.split("\\.")).iterator();
-        try {
-            this.major = Integer.parseInt(parts.next());
-            this.minor = parts.hasNext() ? Integer.parseInt(parts.next()) : 0;
-            this.patch = parts.hasNext() ? parts.next() : "";
-        } catch (NoSuchElementException | NumberFormatException e) {
-            throw new IllegalArgumentException(
-                "Not valid version number %s : %s".formatted(version, e.getMessage())
-            );
-        }
-    }
 
-
-    /**
-     * Return the major part of the version
-     */
-    public int major() {
-        return major;
-    }
-
-
-    /**
-     * Return the minor part of the version (<tt>0</tt> if not present)
-     */
-    public int minor() {
-        return minor;
-    }
-
-
-    /**
-     * Return the patch part of the version (or empty string if not present)
-     */
-    public String patch() {
-        return patch;
-    }
 
 
     /**
@@ -109,19 +80,5 @@ public class Version implements Comparable<Version> {
         return COMPARATOR.compare(this, other);
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Version that = (Version) o;
-        return major == that.major && minor == that.minor && Objects.equals(patch, that.patch);
-    }
-
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(major, minor, patch);
-    }
 
 }

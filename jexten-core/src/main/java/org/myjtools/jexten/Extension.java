@@ -60,14 +60,14 @@ public @interface Extension {
      * The lifecycle scope that determines how extension instances are created and managed.
      * <ul>
      *   <li>{@link Scope#SINGLETON} - One instance shared globally across the application</li>
-     *   <li>{@link Scope#LOCAL} - One instance per ExtensionManager request context</li>
+     *   <li>{@link Scope#SESSION} - One instance per ExtensionManager request context</li>
      *   <li>{@link Scope#TRANSIENT} - New instance created for every request</li>
      * </ul>
      *
      * @return the lifecycle scope for this extension
      * @see Scope
      */
-    Scope scope() default Scope.LOCAL;
+    Scope scope() default Scope.SESSION;
 
 
     /**

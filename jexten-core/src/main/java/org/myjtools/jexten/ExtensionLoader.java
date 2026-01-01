@@ -30,7 +30,7 @@ public interface ExtensionLoader {
      * Implementations should respect the scope semantics:
      * <ul>
      *   <li>{@link Scope#SINGLETON} - Return the same instance across all invocations</li>
-     *   <li>{@link Scope#LOCAL} - Return a cached instance within the current context</li>
+     *   <li>{@link Scope#SESSION} - Return a cached instance within the current context</li>
      *   <li>{@link Scope#TRANSIENT} - Create a new instance for each invocation</li>
      * </ul>
      *

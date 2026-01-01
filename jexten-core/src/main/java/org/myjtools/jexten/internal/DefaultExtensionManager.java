@@ -23,7 +23,7 @@ public class DefaultExtensionManager implements ExtensionManager {
 
 	private final ModuleLayerProvider layerProvider;
 	private static final Map<Class<?>, Object> singletons = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Object> locals = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Object> sessionCache = new ConcurrentHashMap<>();
 	private final Set<Class<?>> invalidExtensions = ConcurrentHashMap.newKeySet();
 	private final Set<Class<?>> validExtensions = ConcurrentHashMap.newKeySet();
 	private final InjectionProvider injectionProvider;
@@ -169,7 +169,7 @@ public class DefaultExtensionManager implements ExtensionManager {
 		} else {
 			instance = switch (scope) {
 				case SINGLETON -> singleton(provider.type());
-				case LOCAL -> local(provider.type());
+				case SESSION -> sessionCache(provider.type());
 				case TRANSIENT -> newInstance(provider.type());
 			};
 		}
@@ -212,8 +212,8 @@ public class DefaultExtensionManager implements ExtensionManager {
 
 
 	@SuppressWarnings("unchecked")
-	private  <T> Optional<T> local(Class<? extends T> type) {
-		T prototype = (T) locals.computeIfAbsent(type, it->newInstance(it).orElse(null));
+	private  <T> Optional<T> sessionCache(Class<? extends T> type) {
+		T prototype = (T) sessionCache.computeIfAbsent(type, it->newInstance(it).orElse(null));
 		return Optional.ofNullable(prototype);
 	}
 
