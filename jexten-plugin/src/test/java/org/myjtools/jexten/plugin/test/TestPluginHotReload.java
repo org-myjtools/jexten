@@ -259,10 +259,61 @@ public class TestPluginHotReload {
         }
 
 
-        // Note: Tests for reloadPlugin are in a separate section below that uses
-        // the test resources with proper artifact structure. The reload functionality
-        // requires artifacts to be present at specific paths, which is tested by
-        // TestPluginManager.installPluginFromBundleFile()
+        @Test
+        @DisplayName("should emit UNLOADED and RELOADED events on reload")
+        void shouldEmitUnloadedAndReloadedEventsOnReload() {
+            pluginManager.installPluginFromBundle(TEST_BUNDLE);
+            receivedEvents.clear();
+
+            pluginManager.reloadPlugin(PLUGIN_ID);
+
+            assertThat(receivedEvents).hasSize(2);
+            assertThat(receivedEvents.get(0).type()).isEqualTo(PluginEvent.Type.UNLOADED);
+            assertThat(receivedEvents.get(1).type()).isEqualTo(PluginEvent.Type.RELOADED);
+        }
+
+
+        @Test
+        @DisplayName("should maintain plugin state after reload")
+        void shouldMaintainPluginStateAfterReload() {
+            pluginManager.installPluginFromBundle(TEST_BUNDLE);
+
+            pluginManager.reloadPlugin(PLUGIN_ID);
+
+            // Plugin should still be present
+            assertThat(pluginManager.plugins()).contains(PLUGIN_ID);
+            assertThat(pluginManager.getPluginManifest(PLUGIN_ID)).isPresent();
+        }
+
+
+        @Test
+        @DisplayName("should handle multiple reload cycles")
+        void shouldHandleMultipleReloadCycles() {
+            pluginManager.installPluginFromBundle(TEST_BUNDLE);
+
+            // Multiple reloads
+            for (int i = 0; i < 3; i++) {
+                pluginManager.reloadPlugin(PLUGIN_ID);
+                assertThat(pluginManager.plugins()).contains(PLUGIN_ID);
+            }
+
+            // Should have: 1 install + 3 * (1 unload + 1 reload) = 7 events
+            assertThat(receivedEvents).hasSize(7);
+        }
+
+
+        @Test
+        @DisplayName("reloadAllPlugins should reload all installed plugins")
+        void reloadAllPluginsShouldReloadAll() {
+            pluginManager.installPluginFromBundle(TEST_BUNDLE);
+            receivedEvents.clear();
+
+            pluginManager.reloadAllPlugins();
+
+            // Should have unload + reload for the plugin
+            assertThat(receivedEvents).hasSize(2);
+            assertThat(pluginManager.plugins()).contains(PLUGIN_ID);
+        }
 
 
         @Test
@@ -293,7 +344,18 @@ public class TestPluginHotReload {
         }
 
 
-        // Note: refresh() test is covered in TestPluginManager with proper artifact setup
+        @Test
+        @DisplayName("should refresh all plugins from disk")
+        void shouldRefreshAllPluginsFromDisk() {
+            pluginManager.installPluginFromBundle(TEST_BUNDLE);
+            assertThat(pluginManager.plugins()).contains(PLUGIN_ID);
+
+            // Refresh
+            pluginManager.refresh();
+
+            // Plugin should still be there (re-discovered from disk)
+            assertThat(pluginManager.plugins()).contains(PLUGIN_ID);
+        }
 
 
         @Test
@@ -373,6 +435,23 @@ public class TestPluginHotReload {
         }
 
 
-        // Note: moduleLayers() test requires proper module layer setup with valid JARs
+        @Test
+        @DisplayName("should clean up module layers after plugin removal")
+        void shouldCleanUpModuleLayersAfterRemoval() {
+            // Initially no layers
+            long initialLayers = pluginManager.moduleLayers().count();
+
+            // Install plugin
+            pluginManager.installPluginFromBundle(TEST_BUNDLE);
+            long afterInstall = pluginManager.moduleLayers().count();
+
+            // After remove, should return to initial state
+            pluginManager.removePlugin(PLUGIN_ID);
+            long afterRemove = pluginManager.moduleLayers().count();
+
+            assertThat(afterRemove).isEqualTo(initialLayers);
+            // Note: afterInstall may or may not be > initialLayers depending on
+            // whether the JARs contain valid Java module descriptors
+        }
     }
 }

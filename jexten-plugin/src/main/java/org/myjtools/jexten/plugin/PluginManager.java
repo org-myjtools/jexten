@@ -486,8 +486,15 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
     private void checkArtifact(PluginManifest plugin, String group, String artifact) {
+        String name = findArtifactName(Path.of(artifact));
+        String version = findArtifactVersion(Path.of(artifact));
         String file = artifact + ".jar";
-        if (Files.notExists(artifactDirectory.resolve(group).resolve(file))) {
+        Path artifactPath = artifactDirectory
+                .resolve(group)
+                .resolve(name)
+                .resolve(version)
+                .resolve(file);
+        if (Files.notExists(artifactPath)) {
             throw new PluginException(
                 "Cannot load plugin {} : artifact {}/{} not present; please reinstall the plugin",
                 plugin.id(),
