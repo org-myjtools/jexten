@@ -10,7 +10,7 @@
 - **Dependency Injection**: Field-level injection with `@Inject` annotation
 - **Dynamic Loading**: Install/remove plugins at runtime without restart
 - **Priority System**: Deterministic extension resolution with priority levels
-- **Scoped Instances**: SINGLETON, LOCAL, and TRANSIENT lifecycle management
+- **Scoped Instances**: SINGLETON, SESSION, and TRANSIENT lifecycle management
 - **Maven & Gradle Support**: First-class build tool integration
 
 ## Quick Start
@@ -61,6 +61,9 @@ public class FriendlyGreeter implements Greeter {
 
 ### 4. Configure module-info.java
 
+The JExten annotation processor will check the necessary configuration in your `module-info.java` file, and it will
+suggest you any missing `uses` or `provides` statements at compile time. Here is an example of how it should look:
+
 ```java
 module com.example.app {
     requires org.myjtools.jexten;
@@ -72,6 +75,7 @@ module com.example.app {
 }
 ```
 
+
 ### 5. Discover and Use Extensions
 
 ```java
@@ -81,7 +85,7 @@ public class Main {
     public static void main(String[] args) {
         ExtensionManager manager = ExtensionManager.create();
 
-        // Get highest priority extension
+        // Get the highest priority extension
         manager.getExtension(Greeter.class)
             .ifPresent(greeter -> greeter.greet("World"));
 
@@ -92,9 +96,53 @@ public class Main {
 }
 ```
 
-## Plugin Management
+## Assembling Plugins
 
-JExten supports dynamic plugin loading via `PluginManager`:
+JExten supports dynamic plugin loading via `PluginManager`. A plugin is a collection of extensions packaged as a JPMS
+module in a ZIP bundle that contains all required artifacts along with the `plugin.yaml` definition file.
+
+You can use the following configuration to automatically generate plugin bundles with Maven:
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.13.0</version>
+            <configuration>
+                <annotationProcessorPaths>
+                    <path>
+                        <groupId>org.myjtools.jexten</groupId>
+                        <artifactId>jexten-processor</artifactId>
+                        <version>1.0.0</version>
+                    </path>
+                </annotationProcessorPaths>
+            </configuration>
+        </plugin>
+        <plugin>
+            <groupId>org.myjtools.jexten</groupId>
+            <artifactId>jexten-maven-plugin</artifactId>
+            <version>1.0.0</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>generate-manifest</goal>
+                        <goal>assemble-bundle</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <application>org.myjtools.jexten.example.app</application>
+                <hostModule>org.myjtools.jexten.example.app</hostModule>
+                <hostArtifact>org.myjtools.jexten.example:jexten-example-app</hostArtifact>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+## Loading Plugins at Runtime
 
 ```java
 import org.myjtools.jexten.plugin.PluginManager;
@@ -106,7 +154,7 @@ public class Application {
 
         // Create plugin manager
         PluginManager pluginManager = new PluginManager(
-            "com.example.app",           // Application ID
+            "org.myjtools.jexten.example.app",  // Application ID
             Application.class.getClassLoader(),
             pluginDir
         );
