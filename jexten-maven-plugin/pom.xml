@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.myjtools.jexten</groupId>
         <artifactId>jexten</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.0-alpha1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -25,7 +25,7 @@
         <dependency>
             <groupId>org.myjtools.jexten</groupId>
             <artifactId>jexten-plugin</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.0-alpha1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
