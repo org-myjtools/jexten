@@ -27,7 +27,7 @@
 <!-- For plugin management -->
 <dependency>
     <groupId>org.myjtools</groupId>
-    <artifactId>jexten-plugin</artifactId>
+    <artifactId>jexten-plugin-manager</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
@@ -358,7 +358,7 @@ extensionPoints:
 | Module | Description |
 |--------|-------------|
 | `jexten-core` | Core annotations and ExtensionManager API |
-| `jexten-plugin` | Plugin management and dynamic loading |
+| `jexten-plugin-manager` | Plugin management and dynamic loading |
 | `jexten-processor` | Compile-time annotation processor |
 | `jexten-maven-plugin` | Maven plugin for bundling plugins |
 | `jexten-maven-artifact-store` | Maven repository integration |
