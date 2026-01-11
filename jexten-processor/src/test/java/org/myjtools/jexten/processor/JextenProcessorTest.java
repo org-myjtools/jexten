@@ -32,7 +32,7 @@ class JextenProcessorTest {
         return javac()
                 .withProcessors(new JextenProcessor())
                 .withClasspath(List.of(
-                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0/jexten-core-1.0.0.jar")
+                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0-alpha1/jexten-core-1.0.0-alpha1.jar")
                 ))
                 .compile(sources);
     }
@@ -40,7 +40,7 @@ class JextenProcessorTest {
     private Compilation compileWithoutProcessor(JavaFileObject... sources) {
         return javac()
                 .withClasspath(List.of(
-                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0/jexten-core-1.0.0.jar")
+                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0-alpha1/jexten-core-1.0.0-alpha1.jar")
                 ))
                 .compile(sources);
     }
@@ -630,25 +630,25 @@ class JextenProcessorTest {
 
 
             @Test
-            @DisplayName("should compile extension with LOCAL scope")
-            void shouldCompileWithLocalScope() {
+            @DisplayName("should compile extension with SESSION scope")
+            void shouldCompileWithSessionScope() {
                 assertCompilation(
                         """
                                 package test;
-                                
+
                                 import org.myjtools.jexten.ExtensionPoint;
-                                
+
                                 @ExtensionPoint(version = "1.0")
                                 public interface Service {}
                                 """,
 
                         """
                                 package test;
-                                
+
                                 import org.myjtools.jexten.Extension;
                                 import org.myjtools.jexten.Scope;
-                                
-                                @Extension(scope = Scope.LOCAL)
+
+                                @Extension(scope = Scope.SESSION)
                                 public class ServiceImpl implements Service {}
                                 """
                 );
