@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>org.myjtools.jexten</groupId>
-            <artifactId>jexten-plugin</artifactId>
+            <artifactId>jexten-plugin-manager</artifactId>
             <version>1.0.0-alpha1</version>
         </dependency>
         <dependency>

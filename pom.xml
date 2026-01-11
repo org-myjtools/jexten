@@ -23,7 +23,7 @@
     <modules>
         <module>jexten-processor</module>
         <module>jexten-core</module>
-        <module>jexten-plugin</module>
+        <module>jexten-plugin-manager</module>
         <module>jexten-maven-plugin</module>
         <module>jexten-maven-artifact-store</module>
     </modules>
