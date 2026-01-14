@@ -1,7 +1,7 @@
 package org.myjtools.jexten.plugin;
 
 import org.myjtools.jexten.Version;
-import org.yaml.snakeyaml.DumperOptions;
+import org.myjtools.jexten.plugin.internal.FileUtil;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.introspector.BeanAccess;
 
@@ -33,6 +33,7 @@ public class PluginManifest {
     private Map<String,List<String>> artifacts;
     private Map<String,List<String>> extensions;
     private List<String> extensionPoints;
+    private Map<String, String> checksums;
 
 
     private PluginManifest() {
@@ -53,6 +54,7 @@ public class PluginManifest {
         this.artifacts = Map.copyOf(builder.artifacts());
         this.extensions = Map.copyOf(builder.extensions());
         this.extensionPoints = List.copyOf(builder.extensionPoints());
+        this.checksums = builder.checksums() != null ? Map.copyOf(builder.checksums()) : Map.of();
     }
 
 
@@ -135,17 +137,11 @@ public class PluginManifest {
         return value == null || value.isBlank();
     }
 
+
     public void write(Writer writer) throws IOException {
-        DumperOptions options = new DumperOptions();
-        options.setIndent(2);
-        options.setPrettyFlow(true);
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        Yaml yaml = new Yaml(options);
-        yaml.setBeanAccess(BeanAccess.FIELD);
+        Yaml yaml = FileUtil.yamlWriter();
         writer.write(yaml.dumpAsMap(this));
     }
-
-
 
 
     public PluginID id() {
@@ -202,6 +198,10 @@ public class PluginManifest {
 
     public List<String> extensionPoints() {
         return extensionPoints;
+    }
+
+    public Map<String, String> checksums() {
+        return checksums;
     }
 
 

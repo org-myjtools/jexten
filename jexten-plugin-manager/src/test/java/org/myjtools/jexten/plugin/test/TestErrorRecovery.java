@@ -8,9 +8,12 @@ import org.junit.jupiter.api.io.TempDir;
 import org.myjtools.jexten.plugin.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -306,6 +309,179 @@ class TestErrorRecovery {
 
             // Plugin should not be loaded due to missing artifact
             assertThat(pm.plugins()).isEmpty();
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Checksum Verification Errors")
+    class ChecksumVerificationErrors {
+
+        @Test
+        @DisplayName("should install plugin successfully when checksums are correct")
+        void shouldInstallWhenChecksumsCorrect() throws IOException, NoSuchAlgorithmException {
+            byte[] jarContent = createMinimalJarContent();
+            String checksum = calculateSha256(jarContent);
+
+            Path zipFile = createPluginBundleWithChecksum("test-plugin-1.0.0.jar", jarContent, checksum);
+
+            assertThatCode(() -> pluginManager.installPluginFromBundle(zipFile))
+                .doesNotThrowAnyException();
+
+            assertThat(pluginManager.plugins()).hasSize(1);
+        }
+
+
+        @Test
+        @DisplayName("should throw exception when checksum does not match")
+        void shouldThrowWhenChecksumMismatch() throws IOException, NoSuchAlgorithmException {
+            byte[] jarContent = createMinimalJarContent();
+            String wrongChecksum = "0000000000000000000000000000000000000000000000000000000000000000";
+
+            Path zipFile = createPluginBundleWithChecksum("test-plugin-1.0.0.jar", jarContent, wrongChecksum);
+
+            assertThatThrownBy(() -> pluginManager.installPluginFromBundle(zipFile))
+                .isInstanceOf(PluginException.class)
+                .hasMessageContaining("Checksum verification failed")
+                .hasMessageContaining("has been modified or corrupted");
+        }
+
+
+        @Test
+        @DisplayName("should install plugin without checksums (backwards compatibility)")
+        void shouldInstallWithoutChecksums() throws IOException {
+            Path zipFile = createValidPluginBundleWithValidJar();
+
+            assertThatCode(() -> pluginManager.installPluginFromBundle(zipFile))
+                .doesNotThrowAnyException();
+
+            assertThat(pluginManager.plugins()).hasSize(1);
+        }
+
+
+        @Test
+        @DisplayName("should throw during discovery when installed artifact has wrong checksum")
+        void shouldThrowDuringDiscoveryWhenChecksumMismatch() throws IOException {
+            // First install a plugin without checksums
+            Path zipFile = createValidPluginBundleWithValidJar();
+            pluginManager.installPluginFromBundle(zipFile);
+            assertThat(pluginManager.plugins()).hasSize(1);
+
+            // Now modify the manifest to include a wrong checksum
+            Path manifestFile = tempDir.resolve("manifests/test-group-test-plugin.yaml");
+            String manifestContent = Files.readString(manifestFile);
+            manifestContent += """
+                checksums:
+                  test-plugin-1.0.0.jar: 0000000000000000000000000000000000000000000000000000000000000000
+                """;
+            Files.writeString(manifestFile, manifestContent);
+
+            // Create new plugin manager which will try to discover this plugin
+            PluginManager pm = new PluginManager("Test-Application", getClass().getClassLoader(), tempDir);
+
+            // Plugin should not be loaded due to checksum mismatch
+            assertThat(pm.plugins()).isEmpty();
+        }
+
+
+        private byte[] createMinimalJarContent() throws IOException {
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                // Add a minimal MANIFEST.MF
+                ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
+                zos.putNextEntry(manifestEntry);
+                zos.write("Manifest-Version: 1.0\n".getBytes());
+                zos.closeEntry();
+            }
+            return baos.toByteArray();
+        }
+
+
+        private Path createValidPluginBundleWithValidJar() throws IOException {
+            Path zipFile = tempDir.resolve("test-bundle-valid-jar.zip");
+            String manifestContent = """
+                group: test-group
+                name: test-plugin
+                version: 1.0.0
+                application: Test-Application
+                hostModule: test.module
+                displayName: Test Plugin
+                description: A test plugin
+                url: http://example.com
+                licenseName: MIT
+                licenseText: MIT License
+                artifacts:
+                  test-group:
+                    - test-plugin-1.0.0
+                """;
+
+            try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+                // Add plugin manifest
+                ZipEntry manifestEntry = new ZipEntry("plugin.yaml");
+                zos.putNextEntry(manifestEntry);
+                zos.write(manifestContent.getBytes());
+                zos.closeEntry();
+
+                // Add a valid JAR (which is a ZIP with META-INF/MANIFEST.MF)
+                ZipEntry jarEntry = new ZipEntry("test-plugin-1.0.0.jar");
+                zos.putNextEntry(jarEntry);
+                zos.write(createMinimalJarContent());
+                zos.closeEntry();
+            }
+            return zipFile;
+        }
+
+
+        private Path createPluginBundleWithChecksum(String jarFileName, byte[] jarContent, String checksum)
+                throws IOException {
+            Path zipFile = tempDir.resolve("test-bundle-with-checksum.zip");
+            String manifestContent = """
+                group: test-group
+                name: test-plugin
+                version: 1.0.0
+                application: Test-Application
+                hostModule: test.module
+                displayName: Test Plugin
+                description: A test plugin
+                url: http://example.com
+                licenseName: MIT
+                licenseText: MIT License
+                artifacts:
+                  test-group:
+                    - test-plugin-1.0.0
+                checksums:
+                  %s: %s
+                """.formatted(jarFileName, checksum);
+
+            try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+                // Add manifest
+                ZipEntry manifestEntry = new ZipEntry("plugin.yaml");
+                zos.putNextEntry(manifestEntry);
+                zos.write(manifestContent.getBytes());
+                zos.closeEntry();
+
+                // Add the jar file
+                ZipEntry jarEntry = new ZipEntry(jarFileName);
+                zos.putNextEntry(jarEntry);
+                zos.write(jarContent);
+                zos.closeEntry();
+            }
+            return zipFile;
+        }
+
+
+        private String calculateSha256(byte[] content) throws NoSuchAlgorithmException {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(content);
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
         }
     }
 

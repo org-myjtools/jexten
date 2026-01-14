@@ -1,5 +1,12 @@
 package org.myjtools.jexten.plugin;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Interface for custom plugin validators.
  * <p>
@@ -139,4 +146,45 @@ public interface PluginValidator {
             }
         };
     }
+
+    static void verifyChecksum(PluginManifest plugin, Path artifactPath, String expectedChecksum) {
+        try {
+            String actualChecksum = calculateSha256(artifactPath);
+            if (!expectedChecksum.equalsIgnoreCase(actualChecksum)) {
+                throw new PluginException(
+                    "Checksum verification failed for plugin {} : artifact {} has been modified or corrupted " +
+                            "(expected {}, found {}); please reinstall the plugin",
+                    plugin.id(),
+                    artifactPath.getFileName(),
+                    expectedChecksum,
+                    actualChecksum
+                );
+            }
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw new PluginException(e, "Cannot verify checksum for artifact {}", artifactPath);
+        }
+    }
+
+
+    static String calculateSha256(Path path) throws IOException, NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream is = Files.newInputStream(path)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+        }
+        byte[] hashBytes = digest.digest();
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
 }

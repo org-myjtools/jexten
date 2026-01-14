@@ -1,11 +1,19 @@
 package org.myjtools.jexten.plugin.internal;
 
 import org.myjtools.jexten.plugin.PluginException;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.introspector.BeanAccess;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.nodes.NodeTuple;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -59,5 +67,26 @@ public class FileUtil {
             throw new IllegalArgumentException("invalid artifact filename: " + filename);
         }
         return filename.substring(filename.lastIndexOf('-') + 1);
+    }
+
+    public static Yaml yamlWriter() {
+        DumperOptions options = new DumperOptions();
+        options.setIndent(2);
+        options.setPrettyFlow(true);
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Representer representer = new Representer(options) {
+            @Override
+            protected NodeTuple representJavaBeanProperty(Object javaBean, Property property, Object propertyValue, Tag customTag) {
+                if (propertyValue == null) {
+                    return null;
+                }
+                if (propertyValue instanceof Map && ((Map<?, ?>) propertyValue).isEmpty()) {
+                    return null;
+                }
+                return super.representJavaBeanProperty(javaBean, property, propertyValue, customTag);
+            }
+        };
+        representer.getPropertyUtils().setBeanAccess(BeanAccess.FIELD);
+        return new Yaml(representer, options);
     }
 }

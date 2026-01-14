@@ -39,6 +39,22 @@ class BundleMojoTest {
     private File buildDirectory;
     private File outputDirectory;
 
+    private static final String VALID_PLUGIN_YAML = """
+        group: com.example
+        name: my-plugin
+        version: '1.0.0'
+        hostModule: com.example.host
+        application: TestApp
+        displayName: My Plugin
+        description: Test plugin
+        licenseName: MIT
+        licenseText: MIT License
+        url: https://example.com
+        artifacts:
+          com.example:
+          - my-plugin-1.0.0
+        """;
+
     @BeforeEach
     void setUp() throws Exception {
         mojo = new BundleMojo();
@@ -146,7 +162,7 @@ class BundleMojoTest {
             when(project.getVersion()).thenReturn("1.0.0");
 
             // Create plugin.yaml
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "test: value");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
 
             // Create jar file
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
@@ -180,7 +196,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("test-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "test: value");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.createFile(buildDirectory.toPath().resolve("test-plugin-1.0.0.jar"));
 
             // Will fail later, but we verify parsing worked by checking it gets past hostArtifact validation
@@ -235,7 +251,7 @@ class BundleMojoTest {
             when(project.getVersion()).thenReturn("1.0.0");
 
             // Create plugin.yaml but not jar
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "test: value");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
 
             assertThatThrownBy(() -> mojo.execute())
                 .isInstanceOf(MojoExecutionException.class)
@@ -249,7 +265,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("2.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "test: value");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-2.0.0.jar"));
 
             mojo.execute();
@@ -265,7 +281,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin\nversion: 1.0.0");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.write(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"), "dummy jar content".getBytes());
 
             mojo.execute();
@@ -286,7 +302,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.write(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"), "dummy jar content".getBytes());
 
             mojo.execute();
@@ -328,7 +344,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
 
             Assertions.assertDoesNotThrow(() -> mojo.execute());
@@ -348,7 +364,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
 
             Assertions.assertDoesNotThrow(() -> mojo.execute());
@@ -369,7 +385,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
 
             // Test deps should be excluded, so no fetching needed
@@ -393,7 +409,7 @@ class BundleMojoTest {
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
 
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), "name: my-plugin");
+            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
             Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
 
             // Provided deps should be excluded

@@ -10,11 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -131,6 +134,7 @@ public class PluginManager implements ModuleLayerProvider {
             PluginID pluginID = manifest.id();
             Path manifestFile = manifestPath(pluginID);
             bundle.extract(artifactDirectory);
+            checkArtifacts(manifest); // Verify checksums after extraction
             installPluginManifest(manifest,manifestFile);
         } catch (IOException  e) {
             throw new PluginException(e, "Cannot install plugin from file {}", bundleFile);
@@ -480,12 +484,13 @@ public class PluginManager implements ModuleLayerProvider {
 
 
     private void checkArtifacts(PluginManifest plugin) {
+        Map<String, String> checksums = plugin.checksums();
         plugin.artifacts().forEach((group,artifacts)-> {
-            artifacts.forEach(artifact -> checkArtifact(plugin, group, artifact));
+            artifacts.forEach(artifact -> checkArtifact(plugin, group, artifact, checksums));
         });
     }
 
-    private void checkArtifact(PluginManifest plugin, String group, String artifact) {
+    private void checkArtifact(PluginManifest plugin, String group, String artifact, Map<String, String> checksums) {
         String name = findArtifactName(Path.of(artifact));
         String version = findArtifactVersion(Path.of(artifact));
         String file = artifact + ".jar";
@@ -502,7 +507,19 @@ public class PluginManager implements ModuleLayerProvider {
                     artifact
             );
         }
+        // Verify checksum if available
+        if (checksums != null && !checksums.isEmpty()) {
+            String expectedChecksum = checksums.get(file);
+            if (expectedChecksum != null) {
+                PluginValidator.verifyChecksum(plugin, artifactPath, expectedChecksum);
+                log.debug("Checksum verified for artifact {}", artifactPath.getFileName());
+            }
+        }
     }
+
+
+
+
 
 
 

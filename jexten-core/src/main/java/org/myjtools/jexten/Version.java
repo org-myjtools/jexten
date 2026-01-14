@@ -65,7 +65,7 @@ public record Version(int major, int minor, String patch) implements Comparable<
      * One version is compatible with other if the major part is the same and the minor part is greater or equal
      */
     public boolean isCompatibleWith(Version otherVersion) {
-        return (major == otherVersion.major && minor >= otherVersion.minor);
+        return major == otherVersion.major && minor >= otherVersion.minor;
     }
 
 

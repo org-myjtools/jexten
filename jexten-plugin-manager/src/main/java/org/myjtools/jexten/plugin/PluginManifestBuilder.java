@@ -17,6 +17,7 @@ public class PluginManifestBuilder {
     private Map<String, List<String>> artifacts = new HashMap<>();
     private Map<String, List<String>> extensions = new HashMap<>();
     private List<String> extensionPoints = new ArrayList<>();
+    private Map<String, String> checksums = new HashMap<>();
 
     public PluginManifestBuilder group(String group) {
         this.group = group;
@@ -83,6 +84,11 @@ public class PluginManifestBuilder {
         return this;
     }
 
+    public PluginManifestBuilder checksums(Map<String, String> checksums) {
+        this.checksums = checksums;
+        return this;
+    }
+
     public PluginManifest build() {
         Objects.requireNonNull(group, "group must not be null");
         Objects.requireNonNull(name, "name must not be null");
@@ -141,5 +147,9 @@ public class PluginManifestBuilder {
 
     public List<String> extensionPoints() {
         return extensionPoints;
+    }
+
+    public Map<String, String> checksums() {
+        return checksums;
     }
 }
