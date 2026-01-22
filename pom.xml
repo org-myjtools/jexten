@@ -19,6 +19,7 @@
     <groupId>org.myjtools.jexten</groupId>
     <name>JExten</name>
     <description>Java Extensions</description>
+    <url>https://github.com/org-myjtools/jexten</url>
 
     <distributionManagement>
         <site>
