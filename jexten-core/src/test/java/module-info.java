@@ -19,7 +19,8 @@ module org.myjtools.jexten.test {
         SingletonExtension,
         ExternallyLoadedExtension,
         InjectedFieldExtension,
-        TransientExtension;
+        TransientExtension,
+        OptionalInjectionExtension;
 
     provides VersionedExtensionPoint with
         VersionedExtension_1,
@@ -34,7 +35,7 @@ module org.myjtools.jexten.test {
         HighestPriorityExtension,
         HigherPriorityExtension;
 
-    provides InjectableExtensionPoint with InjectedExtension;
+    provides InjectableExtensionPoint with InjectedExtension, NamedExtension, AnotherNamedExtension;
 
     provides LoopedExtensionPoint with InjectedLoopExtension;
 

@@ -96,121 +96,10 @@ class BundleMojoTest {
             when(project.getPackaging()).thenReturn("war");
             Assertions.assertDoesNotThrow(() -> mojo.execute());
         }
-
-
-        @Test
-        @DisplayName("should process jar packaging")
-        void shouldProcessJarPackaging() {
-            when(project.getPackaging()).thenReturn("jar");
-
-            // Should throw because hostArtifact is not set
-            assertThatThrownBy(() -> mojo.execute())
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("hostArtifact");
-        }
     }
 
 
-    @Nested
-    @DisplayName("Host artifact validation")
-    class HostArtifactValidation {
 
-        @BeforeEach
-        void setUp() {
-            when(project.getPackaging()).thenReturn("jar");
-        }
-
-
-
-        @Test
-        @DisplayName("should fail when hostArtifact is null")
-        void shouldFailWhenHostArtifactIsNull() throws Exception {
-            testHostArtifactValidation(null);
-        }
-
-        @Test
-        @DisplayName("should fail when hostArtifact is blank")
-        void shouldFailWhenHostArtifactIsBlank() throws Exception {
-            testHostArtifactValidation("   ");
-        }
-
-        @Test
-        @DisplayName("should fail when hostArtifact is empty")
-        void shouldFailWhenHostArtifactIsEmpty() throws Exception {
-            testHostArtifactValidation("");
-        }
-
-        private void testHostArtifactValidation(String hostArtifact) throws Exception {
-            setField(mojo, "hostArtifact", hostArtifact);
-
-            assertThatThrownBy(() -> mojo.execute())
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("Host artifact must be specified");
-        }
-
-
-        @Test
-        @DisplayName("should parse hostArtifact with groupId:artifactId format")
-        void shouldParseHostArtifactFormat() throws Exception {
-            setField(mojo, "hostArtifact", "com.example:my-app");
-
-            LocalRepository localRepo = mock(LocalRepository.class);
-            when(localRepo.getBasedir()).thenReturn(tempDir.toFile());
-            when(repoSession.getLocalRepository()).thenReturn(localRepo);
-            when(project.getDependencies()).thenReturn(java.util.Collections.emptyList());
-            when(project.getArtifactId()).thenReturn("my-plugin");
-            when(project.getVersion()).thenReturn("1.0.0");
-
-            // Create plugin.yaml
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
-
-            // Create jar file
-            Files.createFile(buildDirectory.toPath().resolve("my-plugin-1.0.0.jar"));
-
-            // Execute - should succeed now as maven-fetcher works with empty deps
-            mojo.execute();
-
-            // Verify bundle was created
-            File bundleFile = new File(buildDirectory, "my-plugin-bundle-1.0.0.zip");
-            org.assertj.core.api.Assertions.assertThat(bundleFile).exists();
-        }
-    }
-
-
-    @Nested
-    @DisplayName("Host artifact parsing")
-    class HostArtifactParsing {
-
-
-
-        @Test
-        @DisplayName("should correctly extract groupId from hostArtifact")
-        void shouldExtractGroupId() throws Exception {
-            when(project.getPackaging()).thenReturn("jar");
-            setField(mojo, "hostArtifact", "org.example.group:my-artifact");
-
-            LocalRepository localRepo = mock(LocalRepository.class);
-            when(localRepo.getBasedir()).thenReturn(tempDir.toFile());
-            when(repoSession.getLocalRepository()).thenReturn(localRepo);
-            when(project.getDependencies()).thenReturn(java.util.Collections.emptyList());
-            when(project.getArtifactId()).thenReturn("test-plugin");
-            when(project.getVersion()).thenReturn("1.0.0");
-
-            Files.writeString(outputDirectory.toPath().resolve("plugin.yaml"), VALID_PLUGIN_YAML);
-            Files.createFile(buildDirectory.toPath().resolve("test-plugin-1.0.0.jar"));
-
-            // Will fail later, but we verify parsing worked by checking it gets past hostArtifact validation
-            try {
-                mojo.execute();
-            } catch (MojoExecutionException e) {
-                // Expected - verify it's not about hostArtifact parsing
-                org.assertj.core.api.Assertions.assertThat(e.getMessage())
-                    .doesNotContain("Host artifact must be specified");
-            }
-        }
-
-
-    }
 
 
     @Nested
@@ -220,7 +109,6 @@ class BundleMojoTest {
         @BeforeEach
         void setUp() throws Exception {
             when(project.getPackaging()).thenReturn("jar");
-            setField(mojo, "hostArtifact", "com.example:host-app");
 
             LocalRepository localRepo = mock(LocalRepository.class);
             when(localRepo.getBasedir()).thenReturn(tempDir.toFile());
@@ -323,7 +211,6 @@ class BundleMojoTest {
         @BeforeEach
         void setUp() throws Exception {
             when(project.getPackaging()).thenReturn("jar");
-            setField(mojo, "hostArtifact", "com.example:host-app");
 
             LocalRepository localRepo = mock(LocalRepository.class);
             when(localRepo.getBasedir()).thenReturn(tempDir.toFile());

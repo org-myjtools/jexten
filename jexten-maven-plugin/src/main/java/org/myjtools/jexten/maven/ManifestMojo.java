@@ -39,8 +39,10 @@ public class ManifestMojo extends AbstractMojo {
     @Parameter(property = "hostModule")
     private String hostModule;
 
-    @Parameter(property = "hostArtifact")
-    private String hostArtifact;
+    @Parameter(property = "excludedDependencies")
+    private List<String> excludedDependencies;
+
+
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -126,8 +128,9 @@ public class ManifestMojo extends AbstractMojo {
     private Map<String, List<String>> computeDependencies() {
         Map<String,List<String>> artifacts = new HashMap<>();
         for (var dependency : project.getDependencies()) {
+
             if ("compile".equals(dependency.getScope()) || "runtime".equals(dependency.getScope())) {
-                if ((dependency.getGroupId()+":"+dependency.getArtifactId()).equals(hostArtifact)) {
+                if (isExcludedDependency(dependency.getGroupId(),dependency.getArtifactId())) {
                     continue;
                 }
                 artifacts.computeIfAbsent(dependency.getGroupId(), k -> new java.util.ArrayList<>())
@@ -138,6 +141,21 @@ public class ManifestMojo extends AbstractMojo {
                 .add(project.getArtifactId() + "-" + project.getVersion());
 
         return artifacts;
+    }
+
+
+    private boolean isExcludedDependency(String groupId, String artifactId) {
+        if (excludedDependencies == null) {
+            return false;
+        }
+        for (String excludedDependency : excludedDependencies) {
+            String excludedDependencyGroupId = excludedDependency.substring(0, excludedDependency.indexOf(':'));
+            String excludedDependencyArtifactId = excludedDependency.substring(excludedDependency.indexOf(':') + 1);
+            if (excludedDependencyGroupId.equals(groupId) && excludedDependencyArtifactId.equals(artifactId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

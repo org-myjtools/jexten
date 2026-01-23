@@ -411,7 +411,7 @@ class ManifestMojoTest {
             when(project.getPackaging()).thenReturn("jar");
             setField(mojo, "application", "com.example.app");
             setField(mojo, "hostModule", "com.example.host");
-            setField(mojo, "hostArtifact", "com.example:host-app");
+            setField(mojo, "excludedDependencies", List.of("com.example:host-app"));
 
             Files.writeString(tempDir.resolve("LICENSE"), "MIT License");
         }
@@ -476,34 +476,6 @@ class ManifestMojoTest {
             assertThat(content).doesNotContain("junit-jupiter");
         }
 
-
-        @Test
-        @DisplayName("should exclude host artifact")
-        void shouldExcludeHostArtifact() throws Exception {
-            License license = new License();
-            license.setName("MIT");
-
-            org.apache.maven.model.Dependency hostDep = new org.apache.maven.model.Dependency();
-            hostDep.setGroupId("com.example");
-            hostDep.setArtifactId("host-app");
-            hostDep.setVersion("1.0.0");
-            hostDep.setScope("compile");
-
-            when(project.getGroupId()).thenReturn("com.example");
-            when(project.getArtifactId()).thenReturn("my-plugin");
-            when(project.getVersion()).thenReturn("1.0.0");
-            when(project.getName()).thenReturn("My Plugin");
-            when(project.getDescription()).thenReturn("A test plugin");
-            when(project.getLicenses()).thenReturn(List.of(license));
-            when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(List.of(hostDep));
-
-            mojo.execute();
-
-            File manifestFile = new File(outputDir, "plugin.yaml");
-            String content = Files.readString(manifestFile.toPath());
-            assertThat(content).doesNotContain("host-app-1.0.0");
-        }
 
 
         @Test

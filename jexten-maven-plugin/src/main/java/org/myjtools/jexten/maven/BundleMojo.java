@@ -20,7 +20,6 @@ import org.myjtools.jexten.plugin.PluginManifest;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Stream;
@@ -44,11 +43,8 @@ public class BundleMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.outputDirectory}", readonly = true, required = true)
     private File outputDirectory;
 
-    @Parameter(property = "hostArtifact")
-    private String hostArtifact;
-
-    private String hostGroupId;
-    private String hostArtifactId;
+    @Parameter(property = "excludedDependencies")
+    private List<String> excludedDependencies;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -56,14 +52,6 @@ public class BundleMojo extends AbstractMojo {
         if (!"jar".equals(project.getPackaging())) {
             return;
         }
-
-        if (hostArtifact == null || hostArtifact.isBlank()) {
-            throw new MojoExecutionException("Host artifact must be specified using the 'hostArtifact' parameter.");
-        }
-
-        hostGroupId = hostArtifact.substring(0, hostArtifact.indexOf(':'));
-        hostArtifactId = hostArtifact.substring(hostArtifact.indexOf(':') + 1);
-
 
         Set<String> artifacts = new HashSet<>();
         for (var dependency : project.getDependencies()) {
@@ -139,13 +127,29 @@ public class BundleMojo extends AbstractMojo {
 
     private void collectFetchedArtifacts(Stream<FetchedArtifact> artifacts, Set<FetchedArtifact> fetchedArtifacts) {
         for (var fetchedArtifact : artifacts.toList()) {
-            if (fetchedArtifact.groupId().equals(hostGroupId) && fetchedArtifact.artifactId().equals(hostArtifactId)) {
-               continue;
+            if (isExcludedDependency(fetchedArtifact.groupId(),fetchedArtifact.artifactId())) {
+                continue;
             }
             fetchedArtifacts.add(fetchedArtifact);
             collectFetchedArtifacts(fetchedArtifact.dependencies(), fetchedArtifacts);
         }
     }
+
+
+    private boolean isExcludedDependency(String groupId, String artifactId) {
+        if (excludedDependencies == null) {
+            return false;
+        }
+        for (String excludedDependency : excludedDependencies) {
+            String excludedDependencyGroupId = excludedDependency.substring(0, excludedDependency.indexOf(':'));
+            String excludedDependencyArtifactId = excludedDependency.substring(excludedDependency.indexOf(':') + 1);
+            if (excludedDependencyGroupId.equals(groupId) && excludedDependencyArtifactId.equals(artifactId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private void addZipEntry(Path path, ZipOutputStream zipOut) throws IOException {
         if (Files.notExists(path)) {
