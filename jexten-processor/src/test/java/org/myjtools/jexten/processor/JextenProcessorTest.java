@@ -28,20 +28,28 @@ import static com.google.testing.compile.Compiler.javac;
 @DisplayName("JextenProcessor")
 class JextenProcessorTest {
 
+    private static final java.io.File JEXTEN_CORE_CLASSES = resolveJextenCoreClasspath();
+
+    private static java.io.File resolveJextenCoreClasspath() {
+        // First try the target/classes directory (for reactor builds)
+        java.io.File targetClasses = new java.io.File("../jexten-core/target/classes");
+        if (targetClasses.exists()) {
+            return targetClasses;
+        }
+        // Fallback to local Maven repository
+        return new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0-alpha1/jexten-core-1.0.0-alpha1.jar");
+    }
+
     private Compilation compile(JavaFileObject... sources) {
         return javac()
                 .withProcessors(new JextenProcessor())
-                .withClasspath(List.of(
-                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0-alpha1/jexten-core-1.0.0-alpha1.jar")
-                ))
+                .withClasspath(List.of(JEXTEN_CORE_CLASSES))
                 .compile(sources);
     }
 
     private Compilation compileWithoutProcessor(JavaFileObject... sources) {
         return javac()
-                .withClasspath(List.of(
-                        new java.io.File(System.getProperty("user.home") + "/.m2/repository/org/myjtools/jexten/jexten-core/1.0.0-alpha1/jexten-core-1.0.0-alpha1.jar")
-                ))
+                .withClasspath(List.of(JEXTEN_CORE_CLASSES))
                 .compile(sources);
     }
 
