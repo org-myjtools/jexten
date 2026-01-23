@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.myjtools</groupId>
         <artifactId>myjtools-parent</artifactId>
-        <version>1.3.0</version>
+        <version>1.4.0</version>
     </parent>
 
 
@@ -51,23 +51,6 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.myjtools</groupId>
-                <artifactId>docsite-maven-plugin</artifactId>
-                <version>1.0.1</version>
-                <configuration>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>post-site</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 
 </project>
