@@ -30,7 +30,6 @@
             <groupId>org.myjtools.jexten.example</groupId>
             <artifactId>jexten-example-app</artifactId>
             <version>1.0.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.myjtools.jexten</groupId>
@@ -72,6 +71,9 @@
                     <application>org.myjtools.jexten.example.app</application>
                     <hostModule>org.myjtools.jexten.example.app</hostModule>
                     <hostArtifact>org.myjtools.jexten.example:jexten-example-app</hostArtifact>
+                    <excludedDependencies>
+                        <excludedDependency>org.myjtools.jexten.example:jexten-example-app</excludedDependency>
+                    </excludedDependencies>
                 </configuration>
             </plugin>
         </plugins>
