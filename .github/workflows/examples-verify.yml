@@ -1,0 +1,59 @@
+name: Examples Verify
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'examples/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'examples/**'
+  workflow_dispatch:
+
+jobs:
+  verify-examples:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Install parent project
+        run: mvn -B install -DskipTests
+
+      - name: Build and run examples
+        working-directory: examples
+        run: ./run-example.sh
+
+      - name: Verify plugin bundles were created
+        working-directory: examples
+        run: |
+          echo "Verifying plugin bundles..."
+          EXPECTED_PLUGINS=(
+            "jexten-example-plugin-a"
+            "jexten-example-plugin-b"
+            "jexten-example-plugin-c"
+            "jexten-example-plugin-c1"
+            "jexten-example-plugin-c2"
+          )
+
+          for plugin in "${EXPECTED_PLUGINS[@]}"; do
+            BUNDLE="${plugin}/target/${plugin}-bundle-1.0.0.zip"
+            if [ -f "$BUNDLE" ]; then
+              echo "✓ $BUNDLE exists"
+            else
+              echo "✗ $BUNDLE not found"
+              exit 1
+            fi
+          done
+
+          echo ""
+          echo "All plugin bundles verified successfully!"
