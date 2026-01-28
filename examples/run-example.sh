@@ -16,9 +16,9 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  JExten Example Pipeline${NC}"
 echo -e "${BLUE}========================================${NC}"
 
-# Step 1: Build Maven plugins
-echo -e "\n${YELLOW}[1/3] Building Maven plugins...${NC}"
-./mvnw clean package -DskipTests -q
+# Step 1: Build and install Maven modules
+echo -e "\n${YELLOW}[1/3] Building and installing Maven modules...${NC}"
+./mvnw clean install -DskipTests -q
 
 # Step 2: Copy bundles to app resources
 echo -e "\n${YELLOW}[2/3] Copying plugin bundles to app resources...${NC}"
