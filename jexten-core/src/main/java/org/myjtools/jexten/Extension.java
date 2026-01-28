@@ -11,6 +11,7 @@ import java.lang.annotation.*;
  * managed in spite of implementing or extending the {@link ExtensionPoint}
  * class.
  */
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Extension {

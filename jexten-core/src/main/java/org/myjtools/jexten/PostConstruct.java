@@ -6,6 +6,7 @@ import java.lang.annotation.*;
  * when an extension instance is created, after the
  * injected fields have been resolved.
  */
+@Documented
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PostConstruct {

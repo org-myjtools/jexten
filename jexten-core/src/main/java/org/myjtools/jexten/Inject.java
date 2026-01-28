@@ -9,6 +9,7 @@ import java.lang.annotation.*;
  * This feature provides a minimal inversion of control mechanism, restricted
  * to extensions managed by the {@link ExtensionManager}.
  */
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 public @interface Inject {

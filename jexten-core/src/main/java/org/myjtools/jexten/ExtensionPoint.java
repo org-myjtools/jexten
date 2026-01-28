@@ -14,6 +14,7 @@ import java.lang.annotation.*;
  * order to avoid runtime errors. Otherwise, increment the minor part of the
  * version in order to state the previous methods are still valid.
  */
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ExtensionPoint {
