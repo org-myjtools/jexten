@@ -33,6 +33,22 @@ jobs:
         working-directory: examples
         run: ./run-example.sh
 
+      - name: Debug - Show bundle contents
+        if: failure()
+        working-directory: examples
+        run: |
+          echo "=== Bundle contents ==="
+          for plugin in jexten-example-plugin-a jexten-example-plugin-b; do
+            echo "--- $plugin ---"
+            unzip -l "$plugin/target/${plugin}-bundle-1.0.0.zip" || true
+            echo "--- plugin.yaml ---"
+            unzip -p "$plugin/target/${plugin}-bundle-1.0.0.zip" plugin.yaml || true
+          done
+          echo "=== Working directory ==="
+          pwd
+          echo "=== Resources directory ==="
+          ls -la jexten-example-app/src/main/resources/
+
       - name: Verify plugin bundles were created
         working-directory: examples
         run: |
