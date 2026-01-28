@@ -55,7 +55,7 @@
                         <path>
                             <groupId>org.myjtools.jexten</groupId>
                             <artifactId>jexten-processor</artifactId>
-                            <version>1.0.0</version>
+                            <version>1.0.0-alpha1</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
