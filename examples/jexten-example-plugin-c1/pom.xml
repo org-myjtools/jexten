@@ -30,6 +30,7 @@
             <groupId>org.myjtools.jexten.example</groupId>
             <artifactId>jexten-example-plugin-c</artifactId>
             <version>1.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
