@@ -29,6 +29,7 @@ jobs:
         run: mvn -B verify
 
       - name: SonarCloud Scan
+        if: github.actor != 'dependabot[bot]'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=org-myjtools_jexten -Dsonar.organization=org-myjtools -Dsonar.host.url=https://sonarcloud.io -Dsonar.coverage.jacoco.xmlReportPaths=*/target/site/jacoco/jacoco.xml
