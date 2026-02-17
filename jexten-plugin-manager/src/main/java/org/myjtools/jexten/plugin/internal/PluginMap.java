@@ -36,7 +36,7 @@ public class PluginMap {
     }
 
     public Set<PluginID> ids() {
-        return pluginsByID.keySet();
+        return Set.copyOf(pluginsByID.keySet());
     }
 
     public boolean containsKey(PluginID pluginID) {

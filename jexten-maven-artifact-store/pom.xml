@@ -7,14 +7,14 @@
     <parent>
         <groupId>org.myjtools.jexten</groupId>
         <artifactId>jexten</artifactId>
-        <version>1.0.0-alpha1</version>
+        <version>1.0.0-alpha2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
 
 
     <artifactId>jexten-maven-artifact-store</artifactId>
-    <version>1.0.0-alpha1</version>
+    <version>1.0.0-alpha2</version>
     <packaging>jar</packaging>
     <name>JExten Maven artifact store</name>
     <description>Maven-based artifact store for JExten</description>
@@ -23,7 +23,7 @@
         <dependency>
             <groupId>org.myjtools.jexten</groupId>
             <artifactId>jexten-plugin-manager</artifactId>
-            <version>1.0.0-alpha1</version>
+            <version>1.0.0-alpha2</version>
         </dependency>
         <dependency>
             <groupId>org.myjtools</groupId>

@@ -78,24 +78,7 @@ MavenArtifactStore store = new MavenArtifactStore()
 | `proxy.password` | Proxy authentication password | - |
 | `offline` | Work offline (use only local cache) | `false` |
 
-## Plugin Manifest Format
 
-When using Maven artifact store, plugin manifests specify dependencies using a simplified format:
-
-```yaml
-group: com.example
-name: my-plugin
-version: 1.0.0
-hostModule: com.example.myplugin
-
-artifacts:
-  # Format: groupId -> list of "artifactId-version"
-  org.apache.commons:
-    - commons-lang3-3.12.0
-    - commons-io-2.11.0
-  com.google.guava:
-    - guava-31.1-jre
-```
 
 The store resolves these to full Maven coordinates and fetches all transitive dependencies.
 

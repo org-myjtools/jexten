@@ -49,4 +49,19 @@ class TestPluginManager {
         assertThat(tempDir.resolve("artifacts/slf4j/slf4j-simple/2.0.16/slf4j-simple-2.0.16.jar")).exists();
         assertThat(tempDir.resolve("manifests/Plugin-Group-Plugin-Name.yaml")).exists();
     }
+
+
+    @Test
+    void installPluginFromArtifactStore() {
+        PluginManager pluginManager = new PluginManager("Plugin-Application",TestPluginManager.class.getClassLoader(), tempDir);
+        pluginManager.setArtifactStore(request-> Map.of(
+            "Plugin-Group",   List.of(Path.of("src/test/resources/plugin-1.0.jar")),
+            "assertj", List.of(Path.of("src/test/resources/mock_repo/assertj-core-3.27.1.jar")),
+            "slf4j",   List.of(Path.of("src/test/resources/mock_repo/slf4j-simple-2.0.16.jar"))
+        ));
+        pluginManager.installPluginFromArtifactStore(new PluginID("Plugin-Group","Plugin-Name"));
+        assertThat(tempDir.resolve("artifacts/assertj/assertj-core/3.27.1/assertj-core-3.27.1.jar")).exists();
+        assertThat(pluginManager.plugins()).contains(new PluginID("Plugin-Group","Plugin-Name"));
+    }
+
 }

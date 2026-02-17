@@ -166,6 +166,28 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
+    /**
+     * Install a plugin from the artifact store. The plugin ID must be present in the artifact store, and the corresponding artifact must contain a valid plugin manifest.
+     * If the plugin is already installed, it will be updated if the new version is greater than the existing one.
+     * It also retrieves the plugin dependencies and copies them to the artifacts directory.
+     * @param pluginID The ID of the plugin to install
+     */
+    public void installPluginFromArtifactStore(PluginID pluginID) {
+        if (artifactStore == null) {
+            throw new PluginException(
+                    "Artifact store is not set, cannot install plugin {} from artifact store",
+                    pluginID
+            );
+        }
+        var artifacts = artifactStore.retrieveArtifacts(Map.of(pluginID.group(), List.of(pluginID.name())));
+        if (!artifacts.containsKey(pluginID.group())) {
+            throw new PluginException("No artifact found for plugin {} in artifact store", pluginID);
+        }
+        Path artifactPath = artifacts.get(pluginID.group()).getFirst();
+        installPluginFromJar(artifactPath);
+    }
+
+
     private void installPluginManifest(PluginManifest manifest, Path manifestFile) throws IOException {
 
         PluginID pluginID = manifest.id();
@@ -228,9 +250,7 @@ public class PluginManager implements ModuleLayerProvider {
         }
         Map<String, List<Path>> retrievedArtifacts = artifactStore.retrieveArtifacts(manifest.artifacts());
         retrievedArtifacts.forEach((group, artifacts) -> {
-            artifacts.forEach(artifact -> {
-                installArtifact(group, artifact);
-            });
+            artifacts.forEach(artifact -> installArtifact(group, artifact));
         });
     }
 
@@ -409,8 +429,8 @@ public class PluginManager implements ModuleLayerProvider {
         try {
             // Get old manifest for event
             PluginManifest oldManifest = pluginMap.get(pluginID)
-                    .map(plugin -> plugin.manifest())
-                    .orElseThrow();
+                .map(Plugin::manifest)
+                .orElseThrow();
 
             // Emit unload event
             emitEvent(PluginEvent.unloaded(oldManifest));
@@ -491,14 +511,15 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
     private void checkArtifact(PluginManifest plugin, String group, String artifact, Map<String, String> checksums) {
-        String name = findArtifactName(Path.of(artifact));
-        String version = findArtifactVersion(Path.of(artifact));
+        Path path = Path.of(artifact);
+        String name = findArtifactName(path);
+        String version = findArtifactVersion(path);
         String file = artifact + ".jar";
         Path artifactPath = artifactDirectory
-                .resolve(group)
-                .resolve(name)
-                .resolve(version)
-                .resolve(file);
+            .resolve(group)
+            .resolve(name)
+            .resolve(version)
+            .resolve(file);
         if (Files.notExists(artifactPath)) {
             throw new PluginException(
                 "Cannot load plugin {} : artifact {}/{} not present; please reinstall the plugin",
@@ -516,13 +537,6 @@ public class PluginManager implements ModuleLayerProvider {
             }
         }
     }
-
-
-
-
-
-
-
 
     private boolean validatePluginApplication(PluginManifest manifest) {
         if (!manifest.application().equals(this.application)) {

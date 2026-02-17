@@ -60,10 +60,8 @@ public class MavenArtifactStore implements ArtifactStore {
         List<String> artifactRequest = new ArrayList<>();
         for (Map.Entry<String, List<String>> entry : artifacts.entrySet()) {
             for (String artifact : entry.getValue()) {
-                // Each artifact is expected to be in the format "artifactId-version"
-                String artifactId = artifact.substring(0, artifact.lastIndexOf('-'));
-                String version = artifact.substring(artifact.lastIndexOf('-') + 1);
-                artifactRequest.add(entry.getKey() + ":" + artifactId + ":" + version);
+                // Each artifact is expected to be in the format "artifact" or "artifactId:version"
+                artifactRequest.add(entry.getKey() + ":" + artifact);
             }
         }
         return artifactRequest;

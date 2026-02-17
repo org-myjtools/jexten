@@ -34,7 +34,7 @@
         <dependency>
             <groupId>org.myjtools.jexten</groupId>
             <artifactId>jexten-processor</artifactId>
-            <version>1.0.0-alpha1</version>
+            <version>1.0.0-alpha2</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -50,7 +50,7 @@
                         <path>
                             <groupId>org.myjtools.jexten</groupId>
                             <artifactId>jexten-processor</artifactId>
-                            <version>1.0.0-alpha1</version>
+                            <version>1.0.0-alpha2</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -58,7 +58,7 @@
             <plugin>
                 <groupId>org.myjtools.jexten</groupId>
                 <artifactId>jexten-maven-plugin</artifactId>
-                <version>1.0.0-alpha1</version>
+                <version>1.0.0-alpha2</version>
                 <executions>
                     <execution>
                         <goals>
