@@ -48,9 +48,8 @@ public class MavenArtifactStore implements ArtifactStore {
         List<String> artifactRequest = getArtifactRequest(artifacts);
         var request = new MavenFetchRequest(artifactRequest).scopes("compile", "runtime");
         var result = new HashMap<String,List<Path>>();
-        mavenFetcher.fetchArtifacts(request).allArtifacts().forEach(artifact -> {;
-            String key = artifact.groupId() + ":" + artifact.artifactId();
-            result.computeIfAbsent(key, k -> new ArrayList<>()).add(artifact.path());
+        mavenFetcher.fetchArtifacts(request).allArtifacts().forEach(artifact -> {
+            result.computeIfAbsent(artifact.groupId(), k -> new ArrayList<>()).add(artifact.path());
         });
         return result;
     }
@@ -60,10 +59,34 @@ public class MavenArtifactStore implements ArtifactStore {
         List<String> artifactRequest = new ArrayList<>();
         for (Map.Entry<String, List<String>> entry : artifacts.entrySet()) {
             for (String artifact : entry.getValue()) {
-                // Each artifact is expected to be in the format "artifact" or "artifactId:version"
-                artifactRequest.add(entry.getKey() + ":" + artifact);
+                if (artifact.contains(":")) {
+                    // Already in "artifactId:version" format
+                    artifactRequest.add(entry.getKey() + ":" + artifact);
+                } else {
+                    // In "artifactId-version" format: find the version boundary
+                    // (first hyphen followed by a digit) and convert to "artifactId:version"
+                    int versionStart = findVersionBoundary(artifact);
+                    if (versionStart != -1) {
+                        String artifactId = artifact.substring(0, versionStart - 1);
+                        String version = artifact.substring(versionStart);
+                        artifactRequest.add(entry.getKey() + ":" + artifactId + ":" + version);
+                    } else {
+                        // No version found, use artifact name as-is
+                        artifactRequest.add(entry.getKey() + ":" + artifact);
+                    }
+                }
             }
         }
         return artifactRequest;
+    }
+
+
+    private static int findVersionBoundary(String name) {
+        for (int i = 0; i < name.length() - 1; i++) {
+            if (name.charAt(i) == '-' && Character.isDigit(name.charAt(i + 1))) {
+                return i + 1;
+            }
+        }
+        return -1;
     }
 }

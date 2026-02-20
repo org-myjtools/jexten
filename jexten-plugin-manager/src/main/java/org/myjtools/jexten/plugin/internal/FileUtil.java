@@ -54,19 +54,36 @@ public class FileUtil {
     }
 
     public static String findArtifactName(Path artifact) {
-        String filename = artifact.getFileName().toString();
-        if (filename.lastIndexOf('-') == -1) {
+        String filename = artifact.getFileName().toString().replace(".jar", "");
+        int versionStart = findVersionBoundary(filename);
+        if (versionStart == -1) {
             throw new IllegalArgumentException("invalid artifact filename: " + filename);
         }
-        return filename.substring(0,filename.lastIndexOf('-'));
+        return filename.substring(0, versionStart - 1);
     }
 
     public static String findArtifactVersion(Path artifact) {
-        String filename = artifact.getFileName().toString().replace(".jar","");
-        if (filename.lastIndexOf('-') == -1) {
+        String filename = artifact.getFileName().toString().replace(".jar", "");
+        int versionStart = findVersionBoundary(filename);
+        if (versionStart == -1) {
             throw new IllegalArgumentException("invalid artifact filename: " + filename);
         }
-        return filename.substring(filename.lastIndexOf('-') + 1);
+        return filename.substring(versionStart);
+    }
+
+    /**
+     * Finds the index where the version part starts in an artifact filename.
+     * The version is identified as the first segment starting with a digit
+     * (i.e., the first hyphen followed by a digit).
+     * Returns the index of the first digit of the version, or -1 if not found.
+     */
+    public static int findVersionBoundary(String filename) {
+        for (int i = 0; i < filename.length() - 1; i++) {
+            if (filename.charAt(i) == '-' && Character.isDigit(filename.charAt(i + 1))) {
+                return i + 1;
+            }
+        }
+        return -1;
     }
 
     public static Yaml yamlWriter() {

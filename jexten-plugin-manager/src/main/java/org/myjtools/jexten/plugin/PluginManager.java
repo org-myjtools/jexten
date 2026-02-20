@@ -171,20 +171,38 @@ public class PluginManager implements ModuleLayerProvider {
      * If the plugin is already installed, it will be updated if the new version is greater than the existing one.
      * It also retrieves the plugin dependencies and copies them to the artifacts directory.
      * @param pluginID The ID of the plugin to install
+     * @param version The specific version requested
      */
-    public void installPluginFromArtifactStore(PluginID pluginID) {
+    public void installPluginFromArtifactStore(PluginID pluginID, Version version) {
         if (artifactStore == null) {
             throw new PluginException(
-                    "Artifact store is not set, cannot install plugin {} from artifact store",
-                    pluginID
+                "Artifact store is not set, cannot install plugin {} from artifact store",
+                pluginID
             );
         }
-        var artifacts = artifactStore.retrieveArtifacts(Map.of(pluginID.group(), List.of(pluginID.name())));
+        var artifactRequest = (version != null ?
+            Map.of(pluginID.group(), List.of(pluginID.name()+":"+version)) :
+            Map.of(pluginID.group(), List.of(pluginID.name()
+        )));
+        var artifacts = artifactStore.retrieveArtifacts(artifactRequest);
         if (!artifacts.containsKey(pluginID.group())) {
             throw new PluginException("No artifact found for plugin {} in artifact store", pluginID);
         }
         Path artifactPath = artifacts.get(pluginID.group()).getFirst();
         installPluginFromJar(artifactPath);
+    }
+
+
+    /**
+     * Install a plugin from the artifact store. The plugin ID must be present in the artifact store, and the corresponding artifact must contain a valid plugin manifest.
+     * If the plugin is already installed, it will be updated if the new version is greater than the existing one.
+     * It also retrieves the plugin dependencies and copies them to the artifacts directory.
+     * <p>
+ *     It will try to retrieve the latest version available in the artifact store.
+     * @param pluginID The ID of the plugin to install
+     */
+    public void installPluginFromArtifactStore(PluginID pluginID) {
+        installPluginFromArtifactStore(pluginID, null);
     }
 
 

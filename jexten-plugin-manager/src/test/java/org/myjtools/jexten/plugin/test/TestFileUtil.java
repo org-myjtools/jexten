@@ -273,8 +273,7 @@ public class TestFileUtil {
         void shouldHandleSnapshotVersions() {
             Path artifact = Path.of("my-artifact-1.0.0-SNAPSHOT.jar");
             String name = FileUtil.findArtifactName(artifact);
-            // The method looks for the last hyphen, so SNAPSHOT will be included in version
-            assertThat(name).isEqualTo("my-artifact-1.0.0");
+            assertThat(name).isEqualTo("my-artifact");
         }
 
         @Test
@@ -322,8 +321,7 @@ public class TestFileUtil {
         void shouldHandleSnapshotSuffix() {
             Path artifact = Path.of("my-lib-1.0.0-SNAPSHOT.jar");
             String version = FileUtil.findArtifactVersion(artifact);
-            // Last hyphen is used, so version is "SNAPSHOT"
-            assertThat(version).isEqualTo("SNAPSHOT");
+            assertThat(version).isEqualTo("1.0.0-SNAPSHOT");
         }
 
         @Test
