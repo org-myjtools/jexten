@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0-alpha1] - 2026-01-11
 
 ### Added
+
 - Core annotations: `@ExtensionPoint`, `@Extension`, `@Inject`, `@PostConstruct`
 - `ExtensionManager` for discovering and managing extensions via ServiceLoader
 - `PluginManager` for dynamic plugin loading at runtime
@@ -22,15 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD workflow
 
 ### Changed
+
 - Renamed module `jexten-plugin` to `jexten-plugin-manager` for clarity
 
 ### Fixed
+
 - Hot reload test stability
 - Test classpath configuration for annotation processor tests
 
-## [Unreleased]
+## [1.0.0-alpha2] - 2026-04-18
 
 ### Added
+
 - Runtime dependencies for plugins: a plugin can now have additional artifacts added to its
   module layer after installation, without modifying the plugin bundle itself.
   - `PluginManager.addRuntimeDependency(PluginID, group, artifact)` — registers a runtime dep,
@@ -42,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     plugin manifest, so they survive application restarts and manager refreshes.
 
 ### Planned
+
 - Gradle plugin support
 - Additional scopes for extension lifecycle
 - Plugin dependency resolution improvements
