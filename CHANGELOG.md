@@ -30,6 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Runtime dependencies for plugins: a plugin can now have additional artifacts added to its
+  module layer after installation, without modifying the plugin bundle itself.
+  - `PluginManager.addRuntimeDependency(PluginID, group, artifact)` — registers a runtime dep,
+    fetches it from the `ArtifactStore` if not already present, and reloads the plugin.
+  - `PluginManager.removeRuntimeDependency(PluginID, group, artifact)` — removes a runtime dep
+    and reloads the plugin.
+  - `PluginManager.getRuntimeDependencies(PluginID)` — returns the current runtime deps map.
+  - Runtime deps are persisted in a separate `<group>-<name>.runtime.yaml` file alongside the
+    plugin manifest, so they survive application restarts and manager refreshes.
+
 ### Planned
 - Gradle plugin support
 - Additional scopes for extension lifecycle

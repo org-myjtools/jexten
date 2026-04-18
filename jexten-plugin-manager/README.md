@@ -166,6 +166,62 @@ public class MyArtifactStore implements ArtifactStore {
 }
 ```
 
+## Runtime Dependencies
+
+Some plugins need third-party artifacts in their module layer that are not part of the plugin
+bundle itself — for example, a database plugin that requires a specific JDBC driver chosen at
+deployment time.
+
+Runtime dependencies are managed independently of the plugin manifest (which is owned by the
+plugin author) and can be added or removed at any time without reinstalling the plugin.
+
+### Adding a Runtime Dependency
+
+```java
+// The artifact must be fetchable from the configured ArtifactStore,
+// or already present in the artifact directory.
+pluginManager.addRuntimeDependency(
+    new PluginID("com.example", "db-plugin"),
+    "com.h2database",      // artifact group
+    "h2-2.2.0"            // artifact filename without .jar extension
+);
+// The plugin is reloaded automatically.
+```
+
+### Removing a Runtime Dependency
+
+```java
+boolean removed = pluginManager.removeRuntimeDependency(
+    new PluginID("com.example", "db-plugin"),
+    "com.h2database",
+    "h2-2.2.0"
+);
+// The plugin is reloaded automatically if the dependency was present.
+```
+
+### Querying Runtime Dependencies
+
+```java
+Map<String, List<String>> deps = pluginManager.getRuntimeDependencies(
+    new PluginID("com.example", "db-plugin")
+);
+```
+
+### Persistence
+
+Runtime dependencies are stored in a separate YAML file alongside the plugin manifest:
+
+```
+manifests/
+  com.example-db-plugin.yaml           ← plugin manifest (owned by plugin author)
+  com.example-db-plugin.runtime.yaml   ← runtime deps  (owned by the installer)
+```
+
+This file is:
+- Created automatically on the first `addRuntimeDependency` call.
+- Deleted automatically when the last runtime dependency is removed or when the plugin is uninstalled.
+- Re-read on every `refresh()` or manager restart, so runtime deps survive application restarts.
+
 ## Plugin Lifecycle
 
 ```

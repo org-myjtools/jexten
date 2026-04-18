@@ -184,6 +184,34 @@ public class Application {
 }
 ```
 
+## Runtime Plugin Dependencies
+
+Some plugins need artifacts in their module layer that are not bundled with the plugin itself —
+for example, a JDBC driver chosen at deployment time. JExten handles this through **runtime
+dependencies**, which are managed by the host application independently of the plugin manifest.
+
+```java
+// Add a JDBC driver to an already-installed database plugin
+pluginManager.addRuntimeDependency(
+    new PluginID("com.example", "db-plugin"),
+    "com.h2database",   // group
+    "h2-2.2.0"         // artifact filename without .jar
+);
+
+// The plugin is reloaded automatically with the new artifact in its module layer.
+
+// Remove it later (e.g., to switch drivers)
+pluginManager.removeRuntimeDependency(
+    new PluginID("com.example", "db-plugin"),
+    "com.h2database",
+    "h2-2.2.0"
+);
+```
+
+Runtime dependencies are persisted in a separate `.runtime.yaml` file alongside the plugin
+manifest, so they survive application restarts. The `ArtifactStore` is used to fetch artifacts
+that are not already present in the local artifact directory.
+
 ## Dependency Injection
 
 JExten provides built-in dependency injection:

@@ -67,7 +67,7 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
     private void discoverInstalledPlugin(Path path) {
-        if (Files.isRegularFile(path)) {
+        if (Files.isRegularFile(path) && !path.getFileName().toString().endsWith(".runtime.yaml")) {
             try (Reader reader = Files.newBufferedReader(path)) {
                 PluginManifest plugin = PluginManifest.read(reader);
                 if (!validatePluginApplication(plugin)) {
@@ -274,6 +274,93 @@ public class PluginManager implements ModuleLayerProvider {
 
 
     /**
+     * Add a runtime dependency to an already-installed plugin.
+     * The dependency will be included in the plugin's module layer on the next load.
+     * If the artifact is not already present in the artifact directory and an
+     * {@link ArtifactStore} is configured, it will be fetched automatically.
+     * The plugin is reloaded immediately after the dependency is registered.
+     *
+     * @param pluginID the target plugin
+     * @param group    artifact group (e.g. {@code "com.h2database"})
+     * @param artifact artifact filename without extension (e.g. {@code "h2-2.2.0"})
+     */
+    public void addRuntimeDependency(PluginID pluginID, String group, String artifact) {
+        if (!pluginMap.containsKey(pluginID)) {
+            throw new PluginException("Plugin {} is not installed", pluginID);
+        }
+        try {
+            PluginRuntimeConfig config = loadRuntimeConfig(pluginID);
+            config.addArtifact(group, artifact);
+            ensureRuntimeArtifact(pluginID, group, artifact);
+            saveRuntimeConfig(pluginID, config);
+            reloadPlugin(pluginID);
+        } catch (IOException e) {
+            throw new PluginException(e, "Cannot add runtime dependency {}/{} to plugin {}", group, artifact, pluginID);
+        }
+    }
+
+
+    /**
+     * Remove a runtime dependency from an already-installed plugin.
+     * The plugin is reloaded immediately after the dependency is removed.
+     *
+     * @param pluginID the target plugin
+     * @param group    artifact group
+     * @param artifact artifact filename without extension
+     * @return {@code true} if the dependency was present and removed
+     */
+    public boolean removeRuntimeDependency(PluginID pluginID, String group, String artifact) {
+        if (!pluginMap.containsKey(pluginID)) {
+            throw new PluginException("Plugin {} is not installed", pluginID);
+        }
+        try {
+            PluginRuntimeConfig config = loadRuntimeConfig(pluginID);
+            boolean removed = config.removeArtifact(group, artifact);
+            if (removed) {
+                saveRuntimeConfig(pluginID, config);
+                reloadPlugin(pluginID);
+            }
+            return removed;
+        } catch (IOException e) {
+            throw new PluginException(e, "Cannot remove runtime dependency {}/{} from plugin {}", group, artifact, pluginID);
+        }
+    }
+
+
+    /**
+     * Returns the current runtime dependencies of an installed plugin.
+     *
+     * @param pluginID the target plugin
+     * @return map of group → list of artifact identifiers; empty map if none configured
+     */
+    public Map<String, List<String>> getRuntimeDependencies(PluginID pluginID) {
+        if (!pluginMap.containsKey(pluginID)) {
+            throw new PluginException("Plugin {} is not installed", pluginID);
+        }
+        return loadRuntimeConfig(pluginID).artifacts();
+    }
+
+
+    private void ensureRuntimeArtifact(PluginID pluginID, String group, String artifact) {
+        Path artifactDir = artifactDirectory
+            .resolve(group)
+            .resolve(findArtifactName(Path.of(artifact)))
+            .resolve(findArtifactVersion(Path.of(artifact)));
+        if (Files.exists(artifactDir)) {
+            return;
+        }
+        if (artifactStore == null) {
+            throw new PluginException(
+                "Artifact store is not set, cannot fetch runtime dependency {}/{} for plugin {}",
+                group, artifact, pluginID
+            );
+        }
+        Map<String, List<Path>> retrieved = artifactStore.retrieveArtifacts(Map.of(group, List.of(artifact)));
+        retrieved.getOrDefault(group, List.of()).forEach(path -> installArtifact(group, path));
+    }
+
+
+    /**
      * Remove a plugin from the manager. The plugin must be installed.
      * @param pluginID The ID of the plugin to remove
      */
@@ -287,6 +374,7 @@ public class PluginManager implements ModuleLayerProvider {
                     .orElseThrow();
             pluginMap.remove(pluginID);
             Files.deleteIfExists(manifestPath(pluginID));
+            Files.deleteIfExists(runtimeConfigPath(pluginID));
             log.info("Removed plugin {}", pluginID);
             emitEvent(PluginEvent.removed(manifest));
         } catch (IOException e) {
@@ -508,24 +596,76 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
+    private Path runtimeConfigPath(PluginID pluginID) {
+        return manifestDirectory.resolve(pluginID.group() + "-" + pluginID.name() + ".runtime.yaml");
+    }
+
+
+    private PluginRuntimeConfig loadRuntimeConfig(PluginID pluginID) {
+        Path path = runtimeConfigPath(pluginID);
+        if (Files.notExists(path)) {
+            return PluginRuntimeConfig.empty();
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            return PluginRuntimeConfig.read(reader);
+        } catch (IOException e) {
+            log.warn("Cannot read runtime config for plugin {}: {}", pluginID, e.getMessage());
+            return PluginRuntimeConfig.empty();
+        }
+    }
+
+
+    private void saveRuntimeConfig(PluginID pluginID, PluginRuntimeConfig config) throws IOException {
+        Path path = runtimeConfigPath(pluginID);
+        if (config.isEmpty()) {
+            Files.deleteIfExists(path);
+            return;
+        }
+        try (Writer writer = Files.newBufferedWriter(path)) {
+            config.write(writer);
+        }
+    }
+
+
 
     private Plugin buildPlugin(PluginManifest plugin) {
-        List<Path> artifactPaths = plugin.artifacts().entrySet().stream().flatMap(
+        PluginRuntimeConfig runtimeConfig = loadRuntimeConfig(plugin.id());
+        List<Path> pluginArtifacts = resolveArtifactPaths(mergeArtifacts(plugin.artifacts(), runtimeConfig.artifacts()));
+        return new Plugin(plugin, pluginArtifacts);
+    }
+
+
+    private Map<String, List<String>> mergeArtifacts(Map<String, List<String>> base, Map<String, List<String>> extra) {
+        if (extra.isEmpty()) {
+            return base;
+        }
+        Map<String, List<String>> merged = new HashMap<>(base);
+        extra.forEach((group, artifacts) -> merged.merge(group, artifacts, (existing, added) -> {
+            List<String> combined = new ArrayList<>(existing);
+            added.stream().filter(a -> !combined.contains(a)).forEach(combined::add);
+            return combined;
+        }));
+        return merged;
+    }
+
+
+    private List<Path> resolveArtifactPaths(Map<String, List<String>> artifacts) {
+        return artifacts.entrySet().stream().flatMap(
             entry -> entry.getValue().stream()
             .map(artifact -> artifactDirectory
                     .resolve(entry.getKey())
                     .resolve(findArtifactName(Path.of(artifact)))
                     .resolve(findArtifactVersion(Path.of(artifact)))
             )).toList();
-        return new Plugin(plugin,artifactPaths);
     }
 
 
     private void checkArtifacts(PluginManifest plugin) {
+        PluginRuntimeConfig runtimeConfig = loadRuntimeConfig(plugin.id());
         Map<String, String> checksums = plugin.checksums();
-        plugin.artifacts().forEach((group,artifacts)-> {
-            artifacts.forEach(artifact -> checkArtifact(plugin, group, artifact, checksums));
-        });
+        mergeArtifacts(plugin.artifacts(), runtimeConfig.artifacts()).forEach(
+            (group, artifacts) -> artifacts.forEach(artifact -> checkArtifact(plugin, group, artifact, checksums))
+        );
     }
 
     private void checkArtifact(PluginManifest plugin, String group, String artifact, Map<String, String> checksums) {
