@@ -28,14 +28,14 @@
 <dependency>
     <groupId>org.myjtools</groupId>
     <artifactId>jexten-core</artifactId>
-    <version>1.0.0-alpha1</version>
+    <version>1.0.0-alpha2</version>
 </dependency>
 
 <!-- For plugin management -->
 <dependency>
     <groupId>org.myjtools</groupId>
     <artifactId>jexten-plugin-manager</artifactId>
-    <version>1.0.0-alpha1</version>
+    <version>1.0.0-alpha2</version>
 </dependency>
 ```
 
@@ -122,7 +122,7 @@ You can use the following configuration to automatically generate plugin bundles
                     <path>
                         <groupId>org.myjtools.jexten</groupId>
                         <artifactId>jexten-processor</artifactId>
-                        <version>1.0.0-alpha1</version>
+                        <version>1.0.0-alpha2</version>
                     </path>
                 </annotationProcessorPaths>
             </configuration>
@@ -130,7 +130,7 @@ You can use the following configuration to automatically generate plugin bundles
         <plugin>
             <groupId>org.myjtools.jexten</groupId>
             <artifactId>jexten-maven-plugin</artifactId>
-            <version>1.0.0-alpha1</version>
+            <version>1.0.0-alpha2</version>
             <executions>
                 <execution>
                     <goals>
