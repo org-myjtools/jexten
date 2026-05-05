@@ -16,8 +16,12 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -52,6 +56,17 @@ class ManifestMojoTest {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);
+    }
+
+    private org.apache.maven.artifact.Artifact artifact(String groupId, String artifactId, String version, String scope) {
+        org.apache.maven.artifact.Artifact a = mock(org.apache.maven.artifact.Artifact.class);
+        when(a.getScope()).thenReturn(scope);
+        // groupId/artifactId/version are only accessed for compile/runtime artifacts,
+        // so use lenient to avoid UnnecessaryStubbing when scope is "test"
+        lenient().when(a.getGroupId()).thenReturn(groupId);
+        lenient().when(a.getArtifactId()).thenReturn(artifactId);
+        lenient().when(a.getVersion()).thenReturn(version);
+        return a;
     }
 
 
@@ -295,7 +310,6 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(Collections.emptyList());
 
             mojo.execute();
 
@@ -328,7 +342,6 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(Collections.emptyList());
 
             mojo.execute();
 
@@ -351,7 +364,6 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(Collections.emptyList());
 
             // Create META-INF/extensions file
             File metaInf = new File(outputDir, "META-INF");
@@ -383,7 +395,6 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(Collections.emptyList());
 
             // Create META-INF/extension-points file
             File metaInf = new File(outputDir, "META-INF");
@@ -423,12 +434,6 @@ class ManifestMojoTest {
             License license = new License();
             license.setName("MIT");
 
-            org.apache.maven.model.Dependency dep = new org.apache.maven.model.Dependency();
-            dep.setGroupId("org.apache.commons");
-            dep.setArtifactId("commons-lang3");
-            dep.setVersion("3.14.0");
-            dep.setScope("compile");
-
             when(project.getGroupId()).thenReturn("com.example");
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
@@ -436,7 +441,8 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(List.of(dep));
+            var commonsLang = artifact("org.apache.commons", "commons-lang3", "3.14.0", "compile");
+            when(project.getArtifacts()).thenReturn(Set.of(commonsLang));
 
             mojo.execute();
 
@@ -454,12 +460,6 @@ class ManifestMojoTest {
             License license = new License();
             license.setName("MIT");
 
-            org.apache.maven.model.Dependency testDep = new org.apache.maven.model.Dependency();
-            testDep.setGroupId("org.junit.jupiter");
-            testDep.setArtifactId("junit-jupiter");
-            testDep.setVersion("5.10.0");
-            testDep.setScope("test");
-
             when(project.getGroupId()).thenReturn("com.example");
             when(project.getArtifactId()).thenReturn("my-plugin");
             when(project.getVersion()).thenReturn("1.0.0");
@@ -467,7 +467,8 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(List.of(testDep));
+            var junitArtifact = artifact("org.junit.jupiter", "junit-jupiter", "5.10.0", "test");
+            when(project.getArtifacts()).thenReturn(Set.of(junitArtifact));
 
             mojo.execute();
 
@@ -484,11 +485,37 @@ class ManifestMojoTest {
             License license = new License();
             license.setName("MIT");
 
-            org.apache.maven.model.Dependency runtimeDep = new org.apache.maven.model.Dependency();
-            runtimeDep.setGroupId("org.slf4j");
-            runtimeDep.setArtifactId("slf4j-simple");
-            runtimeDep.setVersion("2.0.9");
-            runtimeDep.setScope("runtime");
+            when(project.getGroupId()).thenReturn("com.example");
+            when(project.getArtifactId()).thenReturn("my-plugin");
+            when(project.getVersion()).thenReturn("1.0.0");
+            when(project.getName()).thenReturn("My Plugin");
+            when(project.getDescription()).thenReturn("A test plugin");
+            when(project.getLicenses()).thenReturn(List.of(license));
+            when(project.getUrl()).thenReturn("https://example.com");
+            var slf4jArtifact = artifact("org.slf4j", "slf4j-simple", "2.0.9", "runtime");
+            when(project.getArtifacts()).thenReturn(Set.of(slf4jArtifact));
+
+            mojo.execute();
+
+            File manifestFile = new File(outputDir, "plugin.yaml");
+            String content = Files.readString(manifestFile.toPath());
+            assertThat(content).contains("slf4j-simple-2.0.9");
+        }
+
+
+        @Test
+        @DisplayName("should include transitive dependencies in manifest")
+        void shouldIncludeTransitiveDependencies() throws Exception {
+            License license = new License();
+            license.setName("MIT");
+
+            // Direct dependency (in getArtifacts() resolved tree)
+            var poiArtifact = artifact("org.apache.poi", "poi-ooxml", "5.4.0", "compile");
+
+            // Transitive dependency: resolved by Maven but NOT declared in the POM.
+            // poi-ooxml declares 'requires org.apache.logging.log4j' in its module-info,
+            // so log4j-api must be in the plugin manifest for the module layer to resolve.
+            var log4jArtifact = artifact("org.apache.logging.log4j", "log4j-api", "2.24.3", "compile");
 
             when(project.getGroupId()).thenReturn("com.example");
             when(project.getArtifactId()).thenReturn("my-plugin");
@@ -497,13 +524,16 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(List.of(runtimeDep));
+            // getArtifacts() is the full resolved dependency tree (direct + transitive)
+            when(project.getArtifacts()).thenReturn(Set.of(poiArtifact, log4jArtifact));
 
             mojo.execute();
 
             File manifestFile = new File(outputDir, "plugin.yaml");
             String content = Files.readString(manifestFile.toPath());
-            assertThat(content).contains("slf4j-simple-2.0.9");
+            assertThat(content).contains("poi-ooxml-5.4.0");
+            // log4j-api is transitive — currently missing from manifest, this assertion fails
+            assertThat(content).contains("log4j-api-2.24.3");
         }
 
 
@@ -520,7 +550,6 @@ class ManifestMojoTest {
             when(project.getDescription()).thenReturn("A test plugin");
             when(project.getLicenses()).thenReturn(List.of(license));
             when(project.getUrl()).thenReturn("https://example.com");
-            when(project.getDependencies()).thenReturn(Collections.emptyList());
 
             mojo.execute();
 

@@ -31,6 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hot reload test stability
 - Test classpath configuration for annotation processor tests
 
+## [1.0.0-alpha4] - 2026-05-05
+
+### Fixed
+
+- `generate-manifest` goal now uses `project.getArtifacts()` (full resolved transitive tree)
+  instead of `project.getDependencies()` (direct dependencies only). This fixes a
+  `FindException` at runtime when a plugin dependency declares `requires` on a transitive
+  module (e.g. `poi-ooxml` requiring `org.apache.logging.log4j`) that was absent from the
+  generated manifest and therefore missing from the plugin module layer.
+- Added `requiresDependencyResolution = COMPILE_PLUS_RUNTIME` to the `generate-manifest`
+  Mojo so Maven resolves transitive artifacts before the goal executes.
+
 ## [1.0.0-alpha2] - 2026-04-18
 
 ### Added

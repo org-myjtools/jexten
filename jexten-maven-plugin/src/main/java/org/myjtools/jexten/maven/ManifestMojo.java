@@ -1,11 +1,13 @@
 package org.myjtools.jexten.maven;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.myjtools.jexten.plugin.PluginFile;
 import org.myjtools.jexten.plugin.PluginManifest;
@@ -19,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Mojo(name = "generate-manifest", defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
+@Mojo(name = "generate-manifest", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class ManifestMojo extends AbstractMojo {
 
 
@@ -127,19 +129,18 @@ public class ManifestMojo extends AbstractMojo {
 
     private Map<String, List<String>> computeDependencies() {
         Map<String,List<String>> artifacts = new HashMap<>();
-        for (var dependency : project.getDependencies()) {
-
-            if ("compile".equals(dependency.getScope()) || "runtime".equals(dependency.getScope())) {
-                if (isExcludedDependency(dependency.getGroupId(),dependency.getArtifactId())) {
+        for (Artifact artifact : project.getArtifacts()) {
+            String scope = artifact.getScope();
+            if ("compile".equals(scope) || "runtime".equals(scope)) {
+                if (isExcludedDependency(artifact.getGroupId(), artifact.getArtifactId())) {
                     continue;
                 }
-                artifacts.computeIfAbsent(dependency.getGroupId(), k -> new java.util.ArrayList<>())
-                        .add(dependency.getArtifactId() + "-" + dependency.getVersion());
+                artifacts.computeIfAbsent(artifact.getGroupId(), k -> new java.util.ArrayList<>())
+                        .add(artifact.getArtifactId() + "-" + artifact.getVersion());
             }
         }
         artifacts.computeIfAbsent(project.getGroupId(), k -> new java.util.ArrayList<>())
                 .add(project.getArtifactId() + "-" + project.getVersion());
-
         return artifacts;
     }
 
