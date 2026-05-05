@@ -44,11 +44,20 @@ public class PluginMap {
     }
 
     public Stream<ModuleLayer> layers() {
+        ensureBuilt();
+        return layersByPlugin.values().stream();
+    }
+
+    public ModuleLayerTree moduleLayerTree() {
+        ensureBuilt();
+        return moduleLayerTree;
+    }
+
+    private void ensureBuilt() {
         if (invalidated) {
             buildPluginMap();
             invalidated = false;
         }
-        return layersByPlugin.values().stream();
     }
 
     public void clear() {

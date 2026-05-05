@@ -122,6 +122,15 @@ public class PluginManager implements ModuleLayerProvider {
 
 
     /**
+     * Returns the module layer tree describing the current plugin configuration.
+     * Triggers plugin map construction if not already built.
+     */
+    public ModuleLayerTree moduleLayerTree() {
+        return pluginMap.moduleLayerTree();
+    }
+
+
+    /**
      * Install a plugin bundle from a file. The bundle file must contain a valid plugin manifest.
      * If the plugin is already installed, it will be updated if the new version is greater than the existing one.
      * @param bundleFile The path to the plugin bundle file
@@ -157,9 +166,10 @@ public class PluginManager implements ModuleLayerProvider {
             }
             runValidators(manifest);
             Path manifestFile = manifestPath(manifest.id());
-            installPluginManifest(manifest,manifestFile);
-            installArtifact(manifest.group(),jarFile);
-            retrieveDependencies(manifest); // Copy the jar file to the artifacts directory
+            // Install artifacts before building the Plugin so ModuleFinder can resolve JARs
+            installArtifact(manifest.group(), jarFile);
+            retrieveDependencies(manifest);
+            installPluginManifest(manifest, manifestFile);
         } catch (IOException  e) {
             throw new PluginException(e, "Cannot install plugin from file {}", jarFile);
         }

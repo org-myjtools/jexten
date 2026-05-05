@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class Plugin {
@@ -79,14 +80,40 @@ public class Plugin {
         log.debug("building module layer for plugin {} with modules: {}", manifest.id(), moduleNames(parentLayer));
         log.debug("parent module layer has modules: {}", parentLayer.configuration().modules());
         try {
+            // Build a finder that excludes modules already visible in the parent layer, so the
+            // resolver picks them from the parent configuration instead of re-adding them to the
+            // plugin layer (which would cause "reads more than one module" errors for automatic modules).
+            ModuleFinder pluginOnlyFinder = filteredFinder(parentLayer);
             return Optional.of(parentLayer.defineModulesWithOneLoader(
-                parentLayer.configuration().resolve(this.moduleFinder, ModuleFinder.of(), moduleNames(parentLayer)),
+                parentLayer.configuration().resolve(pluginOnlyFinder, ModuleFinder.ofSystem(), moduleNames(parentLayer)),
                 parentClassLoader
             ));
         } catch (RuntimeException e) {
             log.error("Cannot build the module layer of plugin {} : {}", this, e.getMessage(),e);
             return Optional.empty();
         }
+    }
+
+    private ModuleFinder filteredFinder(ModuleLayer parentLayer) {
+        var parentModuleNames = parentLayer.modules().stream()
+            .map(Module::getName)
+            .collect(Collectors.toSet());
+        var filteredRefs = moduleReferences.stream()
+            .filter(ref -> !parentModuleNames.contains(ref.descriptor().name()))
+            .collect(Collectors.toSet());
+        return new ModuleFinder() {
+            @Override
+            public Optional<ModuleReference> find(String name) {
+                if (parentModuleNames.contains(name)) {
+                    return Optional.empty();
+                }
+                return moduleFinder.find(name);
+            }
+            @Override
+            public Set<ModuleReference> findAll() {
+                return filteredRefs;
+            }
+        };
     }
 
     public Set<ModuleReference> moduleReferences() {

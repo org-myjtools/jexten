@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha5] - 2026-05-05
+
+### Added
+
+- `PluginManager.moduleLayerTree()` — returns the `ModuleLayerTree` describing the current
+  plugin module layer hierarchy, useful for diagnostics and debug output.
+
+### Fixed
+
+- Plugin installation now copies the plugin artifact and resolved dependencies before
+  persisting the manifest, so module discovery sees a complete artifact set during
+  install and reload operations.
+- Plugin module layer resolution now filters out modules already provided by parent
+  layers, avoiding "reads more than one module" resolution errors when automatic
+  modules are visible both in the parent configuration and in plugin artifacts.
+- Plugin module layer resolution now uses `ModuleFinder.ofSystem()` as the fallback finder,
+  so plugins that transitively require non-default JDK modules (e.g. `jdk.xml.dom` required
+  by `xmlbeans`) resolve correctly without needing those modules pre-loaded in the boot layer.
+
 ## [1.0.0-alpha1] - 2026-01-11
 
 ### Added
