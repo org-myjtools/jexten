@@ -4,6 +4,7 @@ module org.myjtools.jexten.plugin.test {
     requires org.myjtools.jexten.plugin;
     requires org.yaml.snakeyaml;
     requires org.assertj.core;
+    requires java.compiler;
 
     exports org.myjtools.jexten.plugin.test to org.myjtools.jexten, org.junit.platform.commons;
     opens org.myjtools.jexten.plugin.test to org.junit.platform.commons;
