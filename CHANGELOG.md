@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-alpha5] - 2026-05-05
+## [1.0.0-alpha5] - 2026-05-10
 
 ### Added
 
@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `PluginManager.addRuntimeDependency()` now resolves the versioned artifact name when
+  the caller passes a bare artifact ID without a version (e.g. `h2` instead of `h2-2.2.0`).
+  The artifact is downloaded via the `ArtifactStore`, installed, and the versioned name is
+  derived from the returned JAR filename before persisting the runtime config and reloading
+  the plugin.
 - Plugin installation now copies the plugin artifact and resolved dependencies before
   persisting the manifest, so module discovery sees a complete artifact set during
   install and reload operations.
