@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import static org.myjtools.jexten.plugin.internal.FileUtil.findArtifactName;
 import static org.myjtools.jexten.plugin.internal.FileUtil.findArtifactVersion;
+import static org.myjtools.jexten.plugin.internal.FileUtil.findVersionBoundary;
 
 public class PluginManager implements ModuleLayerProvider {
 
@@ -299,14 +300,37 @@ public class PluginManager implements ModuleLayerProvider {
             throw new PluginException("Plugin {} is not installed", pluginID);
         }
         try {
+            // If artifact has no embedded version, download to resolve the versioned filename
+            String resolvedArtifact = resolveVersionedArtifact(group, artifact);
             PluginRuntimeConfig config = loadRuntimeConfig(pluginID);
-            config.addArtifact(group, artifact);
-            ensureRuntimeArtifact(pluginID, group, artifact);
+            config.addArtifact(group, resolvedArtifact);
+            ensureRuntimeArtifact(pluginID, group, resolvedArtifact);
             saveRuntimeConfig(pluginID, config);
             reloadPlugin(pluginID);
         } catch (IOException e) {
             throw new PluginException(e, "Cannot add runtime dependency {}/{} to plugin {}", group, artifact, pluginID);
         }
+    }
+
+
+    private String resolveVersionedArtifact(String group, String artifact) {
+        if (findVersionBoundary(artifact) != -1) {
+            return artifact;
+        }
+        if (artifactStore == null) {
+            throw new PluginException(
+                "Artifact store is not set, cannot resolve version for {}/{}",
+                group, artifact
+            );
+        }
+        Map<String, List<Path>> retrieved = artifactStore.retrieveArtifacts(Map.of(group, List.of(artifact)));
+        List<Path> paths = retrieved.getOrDefault(group, List.of());
+        if (paths.isEmpty()) {
+            throw new PluginException("Cannot resolve artifact {}/{}: artifact store returned no results", group, artifact);
+        }
+        paths.forEach(path -> installArtifact(group, path));
+        String filename = paths.get(0).getFileName().toString();
+        return filename.endsWith(".jar") ? filename.substring(0, filename.length() - 4) : filename;
     }
 
 
