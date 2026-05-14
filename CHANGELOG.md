@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-05-14
+
+### Added
+
+- Stable release — all alpha features promoted to production quality.
+
 ## [1.0.0-alpha5] - 2026-05-10
 
 ### Added
@@ -80,9 +86,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `PluginManager.getRuntimeDependencies(PluginID)` — returns the current runtime deps map.
   - Runtime deps are persisted in a separate `<group>-<name>.runtime.yaml` file alongside the
     plugin manifest, so they survive application restarts and manager refreshes.
-
-### Planned
-
-- Gradle plugin support
-- Additional scopes for extension lifecycle
-- Plugin dependency resolution improvements
