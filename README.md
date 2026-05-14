@@ -1,5 +1,6 @@
 # JExten
 
+[![Maven Central](https://img.shields.io/maven-central/v/org.myjtools.jexten/jexten-core)](https://central.sonatype.com/artifact/org.myjtools.jexten/jexten-core)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=org-myjtools_jexten&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=org-myjtools_jexten)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=org-myjtools_jexten&metric=coverage)](https://sonarcloud.io/summary/new_code?id=org-myjtools_jexten)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=org-myjtools_jexten&metric=bugs)](https://sonarcloud.io/summary/new_code?id=org-myjtools_jexten)
