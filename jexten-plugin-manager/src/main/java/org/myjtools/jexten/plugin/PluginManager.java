@@ -295,6 +295,11 @@ public class PluginManager implements ModuleLayerProvider {
      * @param group    artifact group (e.g. {@code "com.h2database"})
      * @param artifact artifact filename without extension (e.g. {@code "h2-2.2.0"})
      */
+    public void addRuntimeDependency(PluginID pluginID, String group, String artifactId, String version) {
+        addRuntimeDependency(pluginID, group, artifactId + ":" + version);
+    }
+
+
     public void addRuntimeDependency(PluginID pluginID, String group, String artifact) {
         if (!pluginMap.containsKey(pluginID)) {
             throw new PluginException("Plugin {} is not installed", pluginID);
