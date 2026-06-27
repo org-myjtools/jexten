@@ -295,16 +295,20 @@ public class PluginManager implements ModuleLayerProvider {
      * @param group    artifact group (e.g. {@code "com.h2database"})
      * @param artifact artifact filename without extension (e.g. {@code "h2-2.2.0"})
      */
+    public void addRuntimeDependency(PluginID pluginID, String group, String artifactId, String version) {
+        addRuntimeDependency(pluginID, group, artifactId + ":" + version);
+    }
+
+
     public void addRuntimeDependency(PluginID pluginID, String group, String artifact) {
         if (!pluginMap.containsKey(pluginID)) {
             throw new PluginException("Plugin {} is not installed", pluginID);
         }
         try {
-            // If artifact has no embedded version, download to resolve the versioned filename
-            String resolvedArtifact = resolveVersionedArtifact(group, artifact);
             PluginRuntimeConfig config = loadRuntimeConfig(pluginID);
+            String resolvedArtifact = resolveVersionedArtifact(group, artifact, config);
             config.addArtifact(group, resolvedArtifact);
-            ensureRuntimeArtifact(pluginID, group, resolvedArtifact);
+            ensureRuntimeArtifact(pluginID, group, resolvedArtifact, config);
             saveRuntimeConfig(pluginID, config);
             reloadPlugin(pluginID);
         } catch (IOException e) {
@@ -313,7 +317,7 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
-    private String resolveVersionedArtifact(String group, String artifact) {
+    private String resolveVersionedArtifact(String group, String artifact, PluginRuntimeConfig config) {
         if (findVersionBoundary(artifact) != -1) {
             return artifact;
         }
@@ -328,7 +332,7 @@ public class PluginManager implements ModuleLayerProvider {
         if (paths.isEmpty()) {
             throw new PluginException("Cannot resolve artifact {}/{}: artifact store returned no results", group, artifact);
         }
-        paths.forEach(path -> installArtifact(group, path));
+        installAllAndRegisterTransitives(retrieved, group, config);
         String filename = paths.get(0).getFileName().toString();
         return filename.endsWith(".jar") ? filename.substring(0, filename.length() - 4) : filename;
     }
@@ -375,7 +379,7 @@ public class PluginManager implements ModuleLayerProvider {
     }
 
 
-    private void ensureRuntimeArtifact(PluginID pluginID, String group, String artifact) {
+    private void ensureRuntimeArtifact(PluginID pluginID, String group, String artifact, PluginRuntimeConfig config) {
         Path artifactDir = artifactDirectory
             .resolve(group)
             .resolve(findArtifactName(Path.of(artifact)))
@@ -390,7 +394,20 @@ public class PluginManager implements ModuleLayerProvider {
             );
         }
         Map<String, List<Path>> retrieved = artifactStore.retrieveArtifacts(Map.of(group, List.of(artifact)));
-        retrieved.getOrDefault(group, List.of()).forEach(path -> installArtifact(group, path));
+        installAllAndRegisterTransitives(retrieved, group, config);
+    }
+
+
+    private void installAllAndRegisterTransitives(Map<String, List<Path>> retrieved, String primaryGroup, PluginRuntimeConfig config) {
+        retrieved.forEach((g, paths) -> {
+            paths.forEach(path -> installArtifact(g, path));
+            if (!g.equals(primaryGroup)) {
+                paths.stream()
+                    .map(p -> p.getFileName().toString())
+                    .map(f -> f.endsWith(".jar") ? f.substring(0, f.length() - 4) : f)
+                    .forEach(a -> config.addArtifact(g, a));
+            }
+        });
     }
 
 

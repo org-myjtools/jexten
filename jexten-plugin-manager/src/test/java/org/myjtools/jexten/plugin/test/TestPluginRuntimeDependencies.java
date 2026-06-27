@@ -8,6 +8,7 @@ import org.myjtools.jexten.plugin.PluginID;
 import org.myjtools.jexten.plugin.PluginManager;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -160,6 +161,39 @@ class TestPluginRuntimeDependencies {
         Map<String, List<String>> deps = pluginManager.getRuntimeDependencies(PLUGIN_ID);
 
         assertThat(deps).isEmpty();
+    }
+
+
+    @Test
+    void addRuntimeDependency_withExplicitVersion_pinsThatVersionInStoreRequest() {
+        List<String> capturedRequests = new ArrayList<>();
+        pluginManager.setArtifactStore(request -> {
+            request.values().stream().flatMap(List::stream).forEach(capturedRequests::add);
+            return Map.of("assertj", List.of(Path.of("src/test/resources/mock_repo/assertj-core-3.27.1.jar")));
+        });
+
+        pluginManager.addRuntimeDependency(PLUGIN_ID, "assertj", "assertj-core", "3.27.1");
+
+        assertThat(capturedRequests)
+            .as("the artifact store must receive a version-pinned identifier, not a bare artifact name")
+            .anyMatch(id -> id.contains("3.27.1"));
+        assertThat(pluginManager.getRuntimeDependencies(PLUGIN_ID))
+            .containsEntry("assertj", List.of("assertj-core-3.27.1"));
+    }
+
+
+    @Test
+    void addRuntimeDependency_storeReturnsTransitiveDepsFromOtherGroup_areInstalledAndRegistered() {
+        pluginManager.setArtifactStore(request -> Map.of(
+            "com.main",      List.of(Path.of("src/test/resources/mock_repo/assertj-core-3.27.1.jar")),
+            "com.transitive", List.of(Path.of("src/test/resources/mock_repo/slf4j-simple-2.0.16.jar"))
+        ));
+
+        pluginManager.addRuntimeDependency(PLUGIN_ID, "com.main", "assertj-core-3.27.1");
+
+        Map<String, List<String>> deps = pluginManager.getRuntimeDependencies(PLUGIN_ID);
+        assertThat(deps).containsEntry("com.transitive", List.of("slf4j-simple-2.0.16"));
+        assertThat(tempDir.resolve("artifacts/com.transitive/slf4j-simple/2.0.16")).exists();
     }
 
 
