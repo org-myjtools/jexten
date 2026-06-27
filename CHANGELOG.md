@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-06-27
+
+### Fixed
+
+- `PluginManager.addRuntimeDependency()` now accepts an explicit version parameter
+  (`groupId`, `artifactId`, `version`) so callers can pin a specific version instead
+  of resolving the latest available in the artifact store. Fixes silent version drop
+  when a `with` dependency declared a version (e.g. `selenium-chrome-driver:4.25.0`).
+- `PluginManager.addRuntimeDependency()` now installs and registers transitive
+  dependencies returned by the `ArtifactStore` under groups other than the requested
+  one. Previously those artifacts were silently ignored, causing them to be absent from
+  the plugin module layer at runtime.
+
 ## [1.0.0] - 2026-05-14
 
 ### Added
